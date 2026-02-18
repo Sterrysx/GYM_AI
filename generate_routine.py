@@ -25,6 +25,14 @@ def strict_list(weight, sets, rounding=2.5):
         
     return json.dumps(weight_list)
 
+
+def uniform_list(weight, sets):
+    """
+    Generates a uniform weight list for periodized exercises.
+    Example: weight=90, sets=5 -> "[90.0, 90.0, 90.0, 90.0, 90.0]"
+    """
+    return json.dumps([float(weight)] * sets)
+
 # ---------------------------------------------------------
 # 1. DEFINE THE CONSTANT MODULES (The Abs Routine)
 # ---------------------------------------------------------
@@ -54,11 +62,11 @@ daily_workouts = {
         {
             "Day Name": "Push", "Exercise": "Incline Dumbbell Press", 
             "Sets": 3, "Target Reps": "12", 
-            "Weight Input": 22, "Strategy": "variable_drop", "Rounding": 2.5, "Superset Group": None
+            "Weight Input": 22, "Strategy": "variable_drop", "Rounding": 2.0, "Superset Group": None
         },
         
         # Superset A
-        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "A"},
+        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
         {"Day Name": "Push", "Exercise": "Frontal Plate Raises", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
         
         # Superset B
@@ -152,14 +160,21 @@ for day_num in range(1, 6): # Loop Days 1 to 5
         row["Day"] = day_num
         row["Order"] = current_order
         
-        # --- THE MISSING LOGIC ---
+        # --- THE CORE LOGIC ---
         # Convert the single "Weight Input" into the JSON Array String
-        # e.g. 22 -> "[22.0, 19.5, 17.0]"
-        row["target_weight_json"] = strict_list(
-            lift["Weight Input"], 
-            lift["Sets"], 
-            lift.get("Rounding", 2.5)
-        )
+        if lift.get("Strategy") == "periodized_bench":
+            # Bench uses uniform weight across all sets: [90, 90, 90, 90, 90]
+            row["target_weight_json"] = uniform_list(
+                lift["Weight Input"],
+                lift["Sets"]
+            )
+        else:
+            # All other exercises use the drop set logic: [22, 19.5, 17]
+            row["target_weight_json"] = strict_list(
+                lift["Weight Input"], 
+                lift["Sets"], 
+                lift.get("Rounding", 2.5)
+            )
         
         # Remove the raw input so the Excel is clean
         del row["Weight Input"]

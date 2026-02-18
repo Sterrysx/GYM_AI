@@ -1,11 +1,17 @@
 import sqlite3
 import json
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Any
+from weekly_coach import run_weekly_update
 
 app = FastAPI()
 DB_NAME = "gym.db"
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Data Models (Validation)
 class LogSet(BaseModel):
@@ -17,8 +23,8 @@ class LogSet(BaseModel):
     rpe: Optional[int] = None
 
 @app.get("/")
-def health_check():
-    return {"status": "Gym Clerk is Awake", "mode": "Zero-Idle-RAM"}
+def serve_frontend():
+    return FileResponse("static/index.html")
 
 @app.get("/workout/{day_id}")
 def get_workout(day_id: int):
@@ -81,6 +87,17 @@ def log_workout(log: LogSet):
     conn.commit()
     conn.close()
     return {"status": "Saved", "exercise": log.exercise}
+
+
+@app.post("/generate-next-week")
+def generate_next_week():
+    """Exports the current week's data and generates the next week's plan."""
+    try:
+        run_weekly_update()
+        return {"status": "success", "message": "Next week generated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
