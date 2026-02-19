@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, BarChart2, Dumbbell } from 'lucide-react';
+import { Sparkles, Loader2, BarChart2, Dumbbell, Scale } from 'lucide-react';
 import DaySelector from './DaySelector';
 import { generateNextWeek } from '../api/client';
 
@@ -55,28 +55,24 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
 
         {/* Tab navigation */}
         <div className="flex gap-1 mb-2.5">
-          <button
-            onClick={() => onViewChange('stats')}
-            className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeView === 'stats'
-                ? 'bg-zinc-800 text-zinc-200'
-                : 'text-zinc-500 active:bg-zinc-900'
-            }`}
-          >
-            <BarChart2 size={14} />
-            Dashboard
-          </button>
-          <button
-            onClick={() => onViewChange('workout')}
-            className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeView === 'workout'
-                ? 'bg-zinc-800 text-zinc-200'
-                : 'text-zinc-500 active:bg-zinc-900'
-            }`}
-          >
-            <Dumbbell size={14} />
-            Workout
-          </button>
+          {[
+            { key: 'stats',     icon: BarChart2, label: 'Overview' },
+            { key: 'metrics',   icon: Scale,     label: 'Body' },
+            { key: 'workout',   icon: Dumbbell,  label: 'Workout' },
+          ].map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              onClick={() => onViewChange(key)}
+              className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeView === key
+                  ? 'bg-zinc-800 text-zinc-200'
+                  : 'text-zinc-500 active:bg-zinc-900'
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Day selector — only on Workout tab */}

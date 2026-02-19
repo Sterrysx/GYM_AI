@@ -2,13 +2,14 @@ import { useState } from 'react';
 import Layout from './components/Layout';
 import WorkoutFeed from './components/WorkoutFeed';
 import StatsPage from './components/StatsPage';
+import Dashboard from './components/Dashboard';
 import Toast from './components/Toast';
 import { useWorkout } from './hooks/useWorkout';
 import { useToast } from './hooks/useToast';
 import { logExercise } from './api/client';
 
 export default function App() {
-  const [activeView, setActiveView] = useState('stats'); // 'stats' | 'workout'
+  const [activeView, setActiveView] = useState('stats'); // 'stats' | 'metrics' | 'workout'
   const { week, day, exercises, loading, error, load } = useWorkout();
   const { toast, showToast } = useToast();
 
@@ -41,9 +42,9 @@ export default function App() {
         activeView={activeView}
         onViewChange={setActiveView}
       >
-        {activeView === 'stats' ? (
-          <StatsPage />
-        ) : (
+        {activeView === 'stats' && <StatsPage />}
+        {activeView === 'metrics' && <Dashboard />}
+        {activeView === 'workout' && (
           <WorkoutFeed
             exercises={exercises}
             week={week}

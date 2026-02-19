@@ -63,7 +63,7 @@ export async function fetchVolume() {
 
 /**
  * Fetch body-composition metrics from the data lake CSV.
- * Returns { metrics: [{ date, weight_kg, bodyfat_pct, muscle_mass_kg }] }
+ * Returns { data: [{ Date, Weight_kg, BMI, BodyFat_pct, MuscleMass_kg, ... }] }
  */
 export async function fetchMetrics() {
   const { data } = await api.get('/dashboard/metrics');

@@ -331,23 +331,19 @@ def dashboard_volume():
 @app.get("/dashboard/metrics")
 def dashboard_metrics():
     """
-    Reads /data/metrics/body_composition.csv and returns the rows for Recharts.
+    Reads /data/metrics/body_composition.csv via pandas and returns ALL columns
+    as a JSON array of records for the frontend Dashboard.
     """
-    import csv
-    if not BODY_COMP_CSV.exists():
-        return {"metrics": []}
+    import pandas as pd
 
-    rows = []
-    with open(BODY_COMP_CSV, newline="") as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            rows.append({
-                "date": row.get("Date", ""),
-                "weight_kg": _safe_float(row.get("Weight_kg")),
-                "bodyfat_pct": _safe_float(row.get("BodyFat_pct")),
-                "muscle_mass_kg": _safe_float(row.get("MuscleMass_kg")),
-            })
-    return {"metrics": rows}
+    if not BODY_COMP_CSV.exists():
+        return {"data": []}
+
+    try:
+        df = pd.read_csv(BODY_COMP_CSV)
+        return {"data": df.to_dict(orient="records")}
+    except Exception:
+        return {"data": []}
 
 
 def _safe_float(val):

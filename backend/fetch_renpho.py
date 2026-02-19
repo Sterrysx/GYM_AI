@@ -1,89 +1,104 @@
 #!/usr/bin/env python3
 """
-fetch_renpho.py  —  Fetch today's Renpho body‐composition reading and
-append it to the data‐lake CSV at /data/metrics/body_composition.csv.
-
-Usage:
-    python fetch_renpho.py                  # interactive prompt
-    python fetch_renpho.py --weight 82.3 --bf 18.2 --mm 35.1   # CLI args
-    python fetch_renpho.py --demo           # writes a sample row for testing
-
-The CSV has columns: Date, Weight_kg, BodyFat_pct, MuscleMass_kg
+fetch_renpho.py — A "Full Refresh" pipeline.
+Fetches all historical data from Renpho, filters for the new baseline 
+(Feb 16, 2026 onwards), extracts all advanced metrics, and overwrites the CSV.
 """
 
-import argparse
-import csv
 import os
 from datetime import date
 from pathlib import Path
+import pandas as pd
+from dotenv import load_dotenv
+
+from renpho import RenphoClient 
 
 # ── Resolve paths ────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ENV_PATH = PROJECT_ROOT / "backend" / ".env"
 METRICS_DIR = PROJECT_ROOT / "data" / "metrics"
 CSV_PATH = METRICS_DIR / "body_composition.csv"
 
-FIELDNAMES = ["Date", "Weight_kg", "BodyFat_pct", "MuscleMass_kg"]
+# Load credentials from .env
+load_dotenv(ENV_PATH)
+EMAIL = os.getenv("RENPHO_EMAIL")
+PASSWORD = os.getenv("RENPHO_PASSWORD")
 
+# ── The Baseline ─────────────────────────────────────────────────────────────
+CUTOFF_DATE = "2026-02-16"
 
-def ensure_csv():
-    """Create the CSV with headers if it doesn't already exist."""
-    METRICS_DIR.mkdir(parents=True, exist_ok=True)
-    if not CSV_PATH.exists():
-        with open(CSV_PATH, "w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
-            writer.writeheader()
-        print(f"Created {CSV_PATH}")
+def fetch_from_cloud():
+    if not EMAIL or not PASSWORD:
+        print("❌ Error: RENPHO_EMAIL or RENPHO_PASSWORD not found in .env file.")
+        return
 
+    print(f"Authenticating with Renpho Cloud as {EMAIL}...")
+    try:
+        client = RenphoClient(EMAIL, PASSWORD)
+        client.login()
+        print("✓ Login successful. Fetching ALL historical measurements...")
 
-def append_row(weight_kg: float, bodyfat_pct: float, muscle_mass_kg: float):
-    """Append a single row to the CSV with today's date."""
-    ensure_csv()
-    today = date.today().isoformat()
+        measurements = client.get_all_measurements()
+        
+        if not measurements:
+            print("No measurements found in this account.")
+            return
 
-    # Check for duplicate date
-    if CSV_PATH.stat().st_size > 0:
-        with open(CSV_PATH, newline="") as fh:
-            reader = csv.DictReader(fh)
-            for row in reader:
-                if row["Date"] == today:
-                    print(f"⚠  Entry for {today} already exists — skipping.")
-                    return
+        processed_data = []
 
-    with open(CSV_PATH, "a", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
-        writer.writerow({
-            "Date": today,
-            "Weight_kg": round(weight_kg, 2),
-            "BodyFat_pct": round(bodyfat_pct, 2),
-            "MuscleMass_kg": round(muscle_mass_kg, 2),
-        })
-    print(f"✓  Logged: {today}  |  {weight_kg} kg  |  {bodyfat_pct}% BF  |  {muscle_mass_kg} kg MM")
+        for m in measurements:
+            # FIX: ONLY use the universal UNIX integer. Ignore Renpho's timezone-shifted text strings.
+            raw_time = m.get("timeStamp")
+            
+            if not raw_time:
+                continue
+                
+            # Translate universal epoch time directly to your computer's local timezone (Spain)
+            weigh_in_date = date.fromtimestamp(raw_time).isoformat()
+            
+            # Apply the Baseline filter
+            if weigh_in_date >= CUTOFF_DATE:
+                processed_data.append({
+                    "Date": weigh_in_date,
+                    "Weight_kg": m.get("weight"),
+                    "BMI": m.get("bmi"),
+                    "BodyFat_pct": m.get("bodyfat"),
+                    "Water_pct": m.get("water"),
+                    "MuscleMass_kg": m.get("muscle"),
+                    "BoneMass_kg": m.get("bone"),
+                    "BMR_kcal": m.get("bmr"),
+                    "VisceralFat": m.get("visfat"),
+                    "SubcutaneousFat_pct": m.get("subfat"),
+                    "Protein_pct": m.get("protein"),
+                    "MetabolicAge": m.get("bodyage"),
+                    # Temporarily store exact seconds for mathematically perfect sorting
+                    "_exact_time": raw_time 
+                })
 
+        if not processed_data:
+            print(f"No measurements found on or after {CUTOFF_DATE}.")
+            return
 
-def interactive_prompt():
-    """Prompt for values interactively."""
-    print("── Renpho Body Composition Logger ──")
-    weight = float(input("Weight (kg): "))
-    bf = float(input("Body Fat (%): "))
-    mm = float(input("Muscle Mass (kg): "))
-    append_row(weight, bf, mm)
+        df = pd.DataFrame(processed_data)
+        df = df.fillna(0)
+        
+        # Sort by the exact second you stepped on the scale, oldest to newest
+        df = df.sort_values(by="_exact_time")
+        
+        # Now if there are duplicates for the same day, keep="last" accurately keeps the latest one
+        df = df.drop_duplicates(subset=["Date"], keep="last")
+        
+        # Remove the hidden sorting column before saving
+        df = df.drop(columns=["_exact_time"])
 
+        METRICS_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_csv(CSV_PATH, index=False)
 
-def main():
-    parser = argparse.ArgumentParser(description="Log Renpho body composition to data lake CSV")
-    parser.add_argument("--weight", type=float, help="Body weight in kg")
-    parser.add_argument("--bf", type=float, help="Body fat percentage")
-    parser.add_argument("--mm", type=float, help="Muscle mass in kg")
-    parser.add_argument("--demo", action="store_true", help="Write a demo row (82.5 kg, 18.0%%, 35.2 kg)")
-    args = parser.parse_args()
+        print(f"✓ Success! Data Lake Refreshed.")
+        print(f"✓ Saved {len(df)} daily records starting from {CUTOFF_DATE}.")
 
-    if args.demo:
-        append_row(82.5, 18.0, 35.2)
-    elif args.weight and args.bf and args.mm:
-        append_row(args.weight, args.bf, args.mm)
-    else:
-        interactive_prompt()
-
+    except Exception as e:
+        print(f"❌ Failed to fetch from Renpho: {e}")
 
 if __name__ == "__main__":
-    main()
+    fetch_from_cloud()
