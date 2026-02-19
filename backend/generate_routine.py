@@ -13,15 +13,13 @@ def strict_list(weight, sets, rounding=2.5):
         return json.dumps(weight)
     
     # Generate the default drop sequence
-    # Example: Start 22, Rounding 2.5 -> [22, 19.5, 17]
     weight_list = []
     current_weight = float(weight)
     
     for i in range(sets):
-        # Ensure we don't drop below 0
         safe_weight = max(0, current_weight)
         weight_list.append(safe_weight)
-        current_weight -= rounding # Default drop for next set
+        current_weight -= rounding
         
     return json.dumps(weight_list)
 
@@ -32,6 +30,15 @@ def uniform_list(weight, sets):
     Example: weight=90, sets=5 -> "[90.0, 90.0, 90.0, 90.0, 90.0]"
     """
     return json.dumps([float(weight)] * sets)
+
+
+def explicit_list(weights):
+    """
+    Return a pre-defined weight array as a JSON string.
+    Used for small-muscle exercises where auto-drop is too aggressive.
+    Example: [10, 10, 5] -> "[10, 10, 5]"
+    """
+    return json.dumps([float(w) for w in weights])
 
 # ---------------------------------------------------------
 # 1. DEFINE THE CONSTANT MODULES (The Abs Routine)
@@ -51,31 +58,24 @@ abs_routine = [
 # ---------------------------------------------------------
 daily_workouts = {
     1: [ # Day 1: Push
-        # 1. Barbell Bench Press (Standard - Keeps weight flat)
+        # 1. Barbell Bench Press (Periodized — uniform weight across all sets)
+        # Week 1: 5x5 @ 75% of 90kg 1RM = 67.5kg
         {
             "Day Name": "Push", "Exercise": "Barbell Bench Press", 
             "Sets": 5, "Target Reps": "5", 
-            "Weight Input": 90, "Strategy": "periodized_bench", "Rounding": 2.5, "Superset Group": None
+            "Weight Input": 67.5, "Strategy": "periodized_bench", "Rounding": 2.5, "Superset Group": None
         },
-        
-        # 2. Incline DB Press (Anchor: 22kg. Will drop to 20kg if <8 reps)
-        {
-            "Day Name": "Push", "Exercise": "Incline Dumbbell Press", 
-            "Sets": 3, "Target Reps": "12", 
-            "Weight Input": 22, "Strategy": "variable_drop", "Rounding": 2.0, "Superset Group": None
-        },
-        
         # Superset A
-        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
-        {"Day Name": "Push", "Exercise": "Frontal Plate Raises", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
+        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 7.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "A"},
+        {"Day Name": "Push", "Exercise": "Frontal Plate Raises", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 10], "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
         
         # Superset B
         {"Day Name": "Push", "Exercise": "Overhead Tricep Extension (DB)", "Sets": 4, "Target Reps": "12", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "B"},
-        {"Day Name": "Push", "Exercise": "Lateral Dumbbell Raises", "Sets": 4, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
+        {"Day Name": "Push", "Exercise": "Lateral Dumbbell Raises", "Sets": 4, "Target Reps": "15", "Weight Input": [10, 10, 10, 8], "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
         
         # Superset C
         {"Day Name": "Push", "Exercise": "Tricep Pushdowns", "Sets": 4, "Target Reps": "12", "Weight Input": 20, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
-        {"Day Name": "Push", "Exercise": "Lateral Cable Raises", "Sets": 4, "Target Reps": "15", "Weight Input": 5, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
+        {"Day Name": "Push", "Exercise": "Lateral Cable Raises", "Sets": 4, "Target Reps": "15", "Weight Input": [5, 5, 3.75, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
     ],
 
     2: [ # Day 2: Pull
@@ -83,14 +83,14 @@ daily_workouts = {
         
         # Superset A
         {"Day Name": "Pull", "Exercise": "Machine Closed Row", "Sets": 3, "Target Reps": "12", "Weight Input": 57, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
-        {"Day Name": "Pull", "Exercise": "Standing Finger Plate Curls", "Sets": 3, "Target Reps": "20", "Weight Input": 5, "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
+        {"Day Name": "Pull", "Exercise": "Standing Finger Plate Curls", "Sets": 3, "Target Reps": "20", "Weight Input": [5, 5, 5], "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
         
         # Superset B
-        {"Day Name": "Pull", "Exercise": "Cable Bicep Open Curls", "Sets": 3, "Target Reps": "12", "Weight Input": 25, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
-        {"Day Name": "Pull", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": 7.5, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
+        {"Day Name": "Pull", "Exercise": "Cable Bicep Open Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [25, 25, 22.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
+        {"Day Name": "Pull", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [7.5, 7.5, 5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
         
         # Superset C
-        {"Day Name": "Pull", "Exercise": "Dumbbell Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": 18, "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
+        {"Day Name": "Pull", "Exercise": "Dumbbell Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
         {"Day Name": "Pull", "Exercise": "Trapezoid Raises", "Sets": 3, "Target Reps": "15", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
     ],
 
@@ -105,9 +105,9 @@ daily_workouts = {
         
         # Superset C
         {"Day Name": "Lower Body", "Exercise": "Machine Calf Extensions", "Sets": 4, "Target Reps": "15", "Weight Input": 50, "Strategy": "linear", "Rounding": 5, "Superset Group": "C"},
-        {"Day Name": "Lower Body", "Exercise": "Weighted Back Extensions", "Sets": 3, "Target Reps": "15", "Weight Input": 10, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
+        {"Day Name": "Lower Body", "Exercise": "Weighted Back Extensions", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 8.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
         
-        # Abs
+        # Abs (machine-based, not static)
         {"Day Name": "Lower Body", "Exercise": "Abdominal Crunch Machine", "Sets": 3, "Target Reps": "15", "Weight Input": 35, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
     ],
 
@@ -118,26 +118,26 @@ daily_workouts = {
         {"Day Name": "Chest & Back", "Exercise": "Closed Grip Lat Pulldown", "Sets": 3, "Target Reps": "12", "Weight Input": 50, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
         
         # Superset A (Bodyweight)
-        {"Day Name": "Chest & Back", "Exercise": "Push Ups", "Sets": 3, "Target Reps": "Failure", "Weight Input": 0, "Strategy": "linear", "Rounding": 0, "Superset Group": "A"},
-        {"Day Name": "Chest & Back", "Exercise": "Pull Ups", "Sets": 3, "Target Reps": "Failure", "Weight Input": 0, "Strategy": "linear", "Rounding": 0, "Superset Group": "A"},
+        {"Day Name": "Chest & Back", "Exercise": "Push Ups", "Sets": 3, "Target Reps": "Failure", "Weight Input": [0, 0, 0], "Strategy": "linear", "Rounding": 0, "Superset Group": "A"},
+        {"Day Name": "Chest & Back", "Exercise": "Pull Ups", "Sets": 3, "Target Reps": "Failure", "Weight Input": [0, 0, 0], "Strategy": "linear", "Rounding": 0, "Superset Group": "A"},
     ],
 
     5: [ # Day 5: Arms (Pump)
-        # Superset A
+        # Superset A — synced with Day 1 anchor weights
         {"Day Name": "Arms", "Exercise": "Overhead DB Tricep Ext", "Sets": 3, "Target Reps": "12", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "A"},
-        {"Day Name": "Arms", "Exercise": "Open DB Curls", "Sets": 3, "Target Reps": "12", "Weight Input": 18, "Strategy": "linear", "Rounding": 1, "Superset Group": "A"},
+        {"Day Name": "Arms", "Exercise": "Open DB Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 1, "Superset Group": "A"},
         
-        # Superset B
+        # Superset B — Tricep Rope uses same 20kg anchor as Day 1 Pushdowns
         {"Day Name": "Arms", "Exercise": "Tricep Rope Pulldowns", "Sets": 3, "Target Reps": "15", "Weight Input": 20, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
-        {"Day Name": "Arms", "Exercise": "DB Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": 18, "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
+        {"Day Name": "Arms", "Exercise": "DB Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
         
-        # Superset C
-        {"Day Name": "Arms", "Exercise": "DB Lateral Raises", "Sets": 3, "Target Reps": "20", "Weight Input": 10, "Strategy": "linear", "Rounding": 1, "Superset Group": "C"},
-        {"Day Name": "Arms", "Exercise": "Cable Face Pulls", "Sets": 3, "Target Reps": "20", "Weight Input": 25, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
+        # Superset C — small muscle, explicit arrays
+        {"Day Name": "Arms", "Exercise": "DB Lateral Raises", "Sets": 3, "Target Reps": "20", "Weight Input": [10, 10, 8], "Strategy": "linear", "Rounding": 1, "Superset Group": "C"},
+        {"Day Name": "Arms", "Exercise": "Cable Face Pulls", "Sets": 3, "Target Reps": "20", "Weight Input": [25, 25, 22.5], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
         
-        # Superset D
-        {"Day Name": "Arms", "Exercise": "Cable Lateral Raises", "Sets": 3, "Target Reps": "15", "Weight Input": 5, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
-        {"Day Name": "Arms", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": 5, "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
+        # Superset D — small muscle, explicit arrays (synced w/ Day 1 Lateral Cable & Day 2 Reverse Flyes)
+        {"Day Name": "Arms", "Exercise": "Cable Lateral Raises", "Sets": 3, "Target Reps": "15", "Weight Input": [5, 5, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
+        {"Day Name": "Arms", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [5, 5, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
     ]
 }
 
@@ -161,7 +161,10 @@ for day_num in range(1, 6): # Loop Days 1 to 5
         row["Order"] = current_order
         
         # --- THE CORE LOGIC ---
-        # Convert the single "Weight Input" into the JSON Array String
+        # Convert the single "Weight Input" into the JSON Array String.
+        # If Weight Input is already a list, strict_list passes it through as-is.
+        # This allows small-muscle exercises to define explicit arrays
+        # (e.g., [10, 10, 8]) that bypass aggressive auto-drop math.
         if lift.get("Strategy") == "periodized_bench":
             # Bench uses uniform weight across all sets: [90, 90, 90, 90, 90]
             row["target_weight_json"] = uniform_list(
@@ -169,7 +172,6 @@ for day_num in range(1, 6): # Loop Days 1 to 5
                 lift["Sets"]
             )
         else:
-            # All other exercises use the drop set logic: [22, 19.5, 17]
             row["target_weight_json"] = strict_list(
                 lift["Weight Input"], 
                 lift["Sets"], 

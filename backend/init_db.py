@@ -100,6 +100,9 @@ def init_db():
         # Initialize Bench Cycle
         cursor.execute("INSERT OR REPLACE INTO user_stats (key, value) VALUES (?, ?)", 
                        ("current_bench_cycle_week", "1"))
+        # Baseline 1RM for bench press (user-defined: 90kg)
+        cursor.execute("INSERT OR REPLACE INTO user_stats (key, value) VALUES (?, ?)",
+                       ("bench_1rm", "90"))
         
         print("Week 1 seeded successfully!")
     else:

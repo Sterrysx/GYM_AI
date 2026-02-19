@@ -91,6 +91,10 @@ def run_weekly_update():
     row = cursor.fetchone()
     bench_cycle_week = int(row[0]) if row else 1
 
+    cursor.execute("SELECT value FROM user_stats WHERE key='bench_1rm'")
+    row = cursor.fetchone()
+    bench_1rm = float(row[0]) if row else 120.0
+
     new_plan_data = []
 
     for row in plan_rows:
@@ -125,14 +129,9 @@ def run_weekly_update():
                 6: (1, "1", 1.02)  # PR
             }
 
-            # Derive 1RM from current week's bench weight and intensity
-            current_weights = json.loads(exercise['target_weight_json'])
-            current_intensity = cycle_map[bench_cycle_week][2]
-            bench_1rm = current_weights[0] / current_intensity
-
             c_sets, c_reps, c_int = cycle_map[next_cycle_week]
 
-            # Compute new weight, rounded to nearest rounding increment
+            # Compute new weight from stored 1RM, rounded to nearest rounding increment
             rounding = exercise['rounding']
             raw_weight = bench_1rm * c_int
             if rounding > 0:
