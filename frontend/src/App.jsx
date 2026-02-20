@@ -4,6 +4,7 @@ import WorkoutFeed from './components/WorkoutFeed';
 import StatsPage from './components/StatsPage';
 import Dashboard from './components/Dashboard';
 import Toast from './components/Toast';
+import ChatBubble from './components/ChatBubble';
 import { useWorkout } from './hooks/useWorkout';
 import { useToast } from './hooks/useToast';
 import { logExercise } from './api/client';
@@ -59,6 +60,7 @@ export default function App() {
       </Layout>
 
       <Toast msg={toast.msg} isError={toast.isError} visible={toast.visible} />
+      <ChatBubble />
     </>
   );
 }

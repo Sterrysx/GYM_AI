@@ -15,6 +15,9 @@ export default defineConfig({
       '/stats': 'http://localhost:8000',
       '/complete-day': 'http://localhost:8000',
       '/dashboard': 'http://localhost:8000',
+      '/targets': 'http://localhost:8000',
+      '/webhook': 'http://127.0.0.1:8000', // Added this for your Apple Health testing
+      '/chat': 'http://localhost:8000',
     }
   }
 })

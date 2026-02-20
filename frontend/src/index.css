@@ -3,6 +3,9 @@
 /* ── Base resets for OLED dark mode ── */
 html {
   font-size: 16px;
+  /* Prevent iOS rubber-band overscroll from flashing a white background */
+  overscroll-behavior-y: none;
+  background-color: #000;
 }
 
 body {
@@ -11,6 +14,18 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
+  /* Prevent the page from being wider than the screen on mobile */
+  overflow-x: hidden;
+  /* Smooth momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe-area utility classes (used by Layout.jsx) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Hide number-input spinners globally */

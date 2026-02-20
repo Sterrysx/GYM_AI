@@ -1,35 +1,30 @@
-.PHONY: clean build reset dev-backend dev-frontend update-week log-weight
+.PHONY: clean build reset dev-backend dev-frontend update-week log-weight stop
 
-# 1. Wipes the old database and Excel file
+# Preserves the /data lake (CSVs)
 clean:
 	rm -f backend/gym.db backend/gym_routine_master.xlsx
-	@echo "Cleaned old database and routine files."
+	@echo "✅ Cleaned DB and Excel. Metrics CSVs preserved."
 
-# 2. Re-generates the Excel blueprint and seeds the fresh Database
-#    Also ensures the /data lake directories exist.
 build:
 	mkdir -p data/workouts data/metrics
-	cd backend && python generate_routine.py && python init_db.py
-	@echo "Build complete. Database is fresh. Data lake dirs ready."
+	cd backend && python3 generate_routine.py && python3 init_db.py
+	@echo "✅ Database is fresh."
 
-# 3. The "Do Everything" command — clean, build, then launch both servers
-reset: clean build
-	@echo "Starting backend (background) and frontend..."
-	cd backend && python main.py &
-	cd frontend && npm run dev
+# Updated reset to use 8000 for the backend consistency
+reset: stop clean build
+	@echo "🔄 Auto-fetching Renpho metrics..."
+	-cd backend && python3 fetch_renpho.py || echo "Warning: Renpho fetch failed."
+	@echo "🚀 Starting servers..."
+	# Backend starts on port 8000 (default in your main.py)
+	cd backend && python3 main.py & 
+	# Vite will now use your config's 'host: true' automatically
+	cd frontend && npm run dev -- --host
 
-# 4. Start the backend API server
-dev-backend:
-	cd backend && python main.py
+stop:
+	@echo "🛑 Killing existing servers..."
+	-pkill -f "python3 main.py" || true
+	-lsof -t -i:8000 | xargs kill -9 2>/dev/null || true
+	-lsof -t -i:5173 | xargs kill -9 2>/dev/null || true
 
-# 5. Start the Vite frontend dev server
-dev-frontend:
-	cd frontend && npm run dev
-
-# 6. Manually trigger the weekly update script
-update-week:
-	cd backend && python weekly_coach.py
-
-# 7. Log a Renpho body‐composition reading
 log-weight:
-	cd backend && python fetch_renpho.py
+	cd backend && python3 fetch_renpho.py

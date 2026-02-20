@@ -1,0 +1,17 @@
+{
+  "id": "b9e0f5c8-d6b7-46d9-9b6e-35f38b4ded2e",
+  "created": "2026-02-20T17:40:54.810806",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hey",
+      "ts": "2026-02-20T17:40:54.810815"
+    },
+    {
+      "role": "assistant",
+      "content": "Sorry, I couldn't reach the AI model. (404 Client Error: Not Found for url: http://localhost:11434/api/generate)",
+      "ts": "2026-02-20T17:40:54.816913"
+    }
+  ],
+  "summary": ""
+}

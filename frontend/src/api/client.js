@@ -63,9 +63,58 @@ export async function fetchVolume() {
 
 /**
  * Fetch body-composition metrics from the data lake CSV.
- * Returns { data: [{ Date, Weight_kg, BMI, BodyFat_pct, MuscleMass_kg, ... }] }
+ * Returns { body_comp: [...], apple_health: [...], targets: {...} }
+ * @param {string} range — 'lifetime' | 'day' | 'week' | 'month' (optional)
  */
-export async function fetchMetrics() {
-  const { data } = await api.get('/dashboard/metrics');
+export async function fetchMetrics(range) {
+  const params = range && range !== 'lifetime' ? { range } : {};
+  const { data } = await api.get('/dashboard/metrics', { params });
+  return data;
+}
+
+/**
+ * Get current targets { weight_kg, bodyfat_pct, muscle_kg }
+ */
+export async function fetchTargets() {
+  const { data } = await api.get('/targets');
+  return data;
+}
+
+/**
+ * Update targets
+ * @param {{ weight_kg: number, bodyfat_pct: number, muscle_kg: number }} targets
+ */
+export async function updateTargets(targets) {
+  const { data } = await api.put('/targets', targets);
+  return data;
+}
+
+/**
+ * Send a chat message to the AI coach.
+ * @param {string} message
+ * @param {string|null} conversationId — omit to start a new conversation
+ * @returns {{ conversation_id: string, reply: string }}
+ */
+export async function sendChatMessage(message, conversationId = null) {
+  const { data } = await api.post('/chat', {
+    message,
+    conversation_id: conversationId,
+  });
+  return data;
+}
+
+/**
+ * List all past conversations (summaries).
+ */
+export async function fetchChatHistory() {
+  const { data } = await api.get('/chat/history');
+  return data.conversations;
+}
+
+/**
+ * Load a full conversation by ID.
+ */
+export async function fetchConversation(conversationId) {
+  const { data } = await api.get(`/chat/${conversationId}`);
   return data;
 }

@@ -29,7 +29,8 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
   return (
     <div className="min-h-dvh bg-black text-zinc-200 font-sans">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-10 bg-black border-b border-zinc-800 px-4 py-3">
+      {/* pt-safe pushes content below the iPhone Dynamic Island / status bar */}
+      <header className="sticky top-0 z-10 bg-black border-b border-zinc-800 px-4 pb-3 pt-safe" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         {/* Title row */}
         <div className="flex items-center justify-between mb-2.5">
           <h1 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
@@ -81,8 +82,8 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
         )}
       </header>
 
-      {/* ── Main Content ── */}
-      <main>{children}</main>
+      {/* ── Main Content ── safe-area-inset-bottom keeps content above the iOS home indicator */}
+      <main style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>{children}</main>
     </div>
   );
 }
