@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import WorkoutFeed from './components/WorkoutFeed';
 import StatsPage from './components/StatsPage';
 import Dashboard from './components/Dashboard';
+import PlanViewer from './components/PlanViewer';
 import Toast from './components/Toast';
 import ChatBubble from './components/ChatBubble';
 import { useWorkout } from './hooks/useWorkout';
@@ -45,6 +46,7 @@ export default function App() {
       >
         {activeView === 'stats' && <StatsPage />}
         {activeView === 'metrics' && <Dashboard />}
+        {activeView === 'plan' && <PlanViewer />}
         {activeView === 'workout' && (
           <WorkoutFeed
             exercises={exercises}

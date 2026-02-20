@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/',
-  timeout: 10_000,
+  timeout: 100_000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -116,5 +116,16 @@ export async function fetchChatHistory() {
  */
 export async function fetchConversation(conversationId) {
   const { data } = await api.get(`/chat/${conversationId}`);
+  return data;
+}
+
+/**
+ * Fetch the workout plan for any week.
+ * @param {number|null} weekId — omit for current week
+ * @returns {{ weeks: number[], current_week: number, days: Object }}
+ */
+export async function fetchPlan(weekId = null) {
+  const params = weekId ? { week_id: weekId } : {};
+  const { data } = await api.get('/plan', { params });
   return data;
 }

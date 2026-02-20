@@ -18,6 +18,7 @@ export default defineConfig({
       '/targets': 'http://localhost:8000',
       '/webhook': 'http://127.0.0.1:8000', // Added this for your Apple Health testing
       '/chat': 'http://localhost:8000',
+      '/plan': 'http://localhost:8000',
     }
   }
 })

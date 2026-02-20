@@ -494,6 +494,58 @@ def _safe_float(val):
         return None
 
 
+# ── Plan Viewer (browse any week) ────────────────────────────────────────────
+
+@app.get("/plan")
+def get_plan(week_id: Optional[int] = Query(None)):
+    """
+    Returns the full workout plan for a given week, grouped by day.
+    If week_id is omitted, returns the current (latest) week.
+    Also returns the list of all available week IDs for the week switcher.
+    """
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Available weeks
+    cursor.execute("SELECT DISTINCT week_id FROM workout_plan ORDER BY week_id")
+    all_weeks = [r["week_id"] for r in cursor.fetchall()]
+
+    if not all_weeks:
+        conn.close()
+        return {"weeks": [], "current_week": None, "days": {}}
+
+    target_week = week_id if week_id and week_id in all_weeks else all_weeks[-1]
+
+    cursor.execute("""
+        SELECT day, day_name, exercise_order, exercise, sets, target_reps,
+               target_weight_json, superset_group, strategy
+        FROM workout_plan
+        WHERE week_id = ?
+        ORDER BY day, exercise_order
+    """, (target_week,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Group by day
+    days = {}
+    for r in rows:
+        d = r["day"]
+        if d not in days:
+            days[d] = {"day": d, "day_name": r["day_name"] or "", "exercises": []}
+        weights = json.loads(r["target_weight_json"]) if r["target_weight_json"] else []
+        days[d]["exercises"].append({
+            "exercise": r["exercise"],
+            "sets": r["sets"],
+            "target_reps": r["target_reps"],
+            "weights": weights,
+            "superset_group": r["superset_group"],
+            "strategy": r["strategy"],
+        })
+
+    return {"weeks": all_weeks, "current_week": target_week, "days": days}
+
+
 # ── AI Chat ──────────────────────────────────────────────────────────────────
 
 class ChatMessage(BaseModel):
