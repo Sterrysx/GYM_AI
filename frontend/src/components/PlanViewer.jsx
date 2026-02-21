@@ -148,8 +148,8 @@ export default function PlanViewer() {
                         )}
                       </div>
 
-                      {/* Set-by-set weight table */}
-                      <div className="grid grid-cols-[2.5rem_1fr] gap-x-2 gap-y-1">
+                      {/* Set-by-set weight + reps table */}
+                      <div className="grid grid-cols-[2.5rem_1fr_1fr] gap-x-2 gap-y-1">
                         {ex.weights.map((w, si) => (
                           <div key={si} className="contents">
                             <span className="text-[0.65rem] font-semibold text-zinc-500 text-center leading-6">
@@ -157,6 +157,9 @@ export default function PlanViewer() {
                             </span>
                             <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-sky-400">
                               {w} kg
+                            </div>
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-400">
+                              {ex.target_reps} reps
                             </div>
                           </div>
                         ))}

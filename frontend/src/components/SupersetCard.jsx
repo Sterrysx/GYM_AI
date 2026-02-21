@@ -140,7 +140,7 @@ export default function SupersetCard({ exercises, week, day, onLog, onError }) {
                     ref={assignRef(ex.exercise, setIdx)}
                     type="number"
                     inputMode="numeric"
-                    placeholder="reps"
+                    placeholder={ex.target_reps != null ? String(ex.target_reps) : 'reps'}
                     min={0}
                     max={99}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2.5 px-2 text-center text-[0.95rem] text-zinc-200 placeholder-zinc-600 placeholder:text-xs focus:outline-none focus:border-sky-400 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

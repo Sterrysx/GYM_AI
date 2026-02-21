@@ -101,7 +101,7 @@ export default function ExerciseCard({ exercise, week, day, onLog, onError }) {
         </div>
 
         {Array.from({ length: numSets }, (_, i) => (
-          <SetRow key={i} index={i} weight={weights[i]} ref={assignRef(i)} />
+          <SetRow key={i} index={i} weight={weights[i]} targetReps={targetReps} ref={assignRef(i)} />
         ))}
       </div>
 

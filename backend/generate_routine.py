@@ -66,56 +66,56 @@ daily_workouts = {
             "Weight Input": 67.5, "Strategy": "periodized_bench", "Rounding": 2.5, "Superset Group": None
         },
         # Superset A
-        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 7.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "A"},
-        {"Day Name": "Push", "Exercise": "Frontal Plate Raises", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 10], "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
+        {"Day Name": "Push", "Exercise": "Low Cable Flyes", "Sets": 3, "Target Reps": "6-10", "Weight Input": [7.5, 7.5, 5], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
+        {"Day Name": "Push", "Exercise": "Frontal Plate Raises", "Sets": 3, "Target Reps": "6-10", "Weight Input": [10, 5, 5], "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
         
         # Superset B
-        {"Day Name": "Push", "Exercise": "Overhead Tricep Extension (DB)", "Sets": 4, "Target Reps": "12", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "B"},
-        {"Day Name": "Push", "Exercise": "Lateral Dumbbell Raises", "Sets": 4, "Target Reps": "15", "Weight Input": [10, 10, 10, 8], "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
+        {"Day Name": "Push", "Exercise": "Overhead Tricep Extension (Cable)", "Sets": 4, "Target Reps": "6-10", "Weight Input": [65, 60, 55, 50], "Strategy": "linear", "Rounding": 5, "Superset Group": "B"},
+        {"Day Name": "Push", "Exercise": "Lateral Dumbbell Raises", "Sets": 4, "Target Reps": "12", "Weight Input": [8, 7, 6, 6], "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
         
         # Superset C
-        {"Day Name": "Push", "Exercise": "Tricep Pushdowns", "Sets": 4, "Target Reps": "12", "Weight Input": 20, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
-        {"Day Name": "Push", "Exercise": "Lateral Cable Raises", "Sets": 4, "Target Reps": "15", "Weight Input": [5, 5, 3.75, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
+        {"Day Name": "Push", "Exercise": "Tricep Pushdowns", "Sets": 4, "Target Reps": "12", "Weight Input": [85, 80, 75, 70], "Strategy": "linear", "Rounding": 5, "Superset Group": "C"},
+        {"Day Name": "Push", "Exercise": "Lateral Cable Raises", "Sets": 4, "Target Reps": "12", "Weight Input": [3.75, 3.75, 2.5, 2.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
     ],
 
     2: [ # Day 2: Pull
-        {"Day Name": "Pull", "Exercise": "Lat Pulldowns", "Sets": 3, "Target Reps": "12", "Weight Input": 70, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
+        {"Day Name": "Pull", "Exercise": "Lat Pulldowns", "Sets": 3, "Target Reps": "12", "Weight Input": [70, 60, 50], "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
         
         # Superset A
-        {"Day Name": "Pull", "Exercise": "Machine Closed Row", "Sets": 3, "Target Reps": "12", "Weight Input": 57, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
+        {"Day Name": "Pull", "Exercise": "Machine Closed Row", "Sets": 3, "Target Reps": "12", "Weight Input": [47, 42, 37], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
         {"Day Name": "Pull", "Exercise": "Standing Finger Plate Curls", "Sets": 3, "Target Reps": "20", "Weight Input": [5, 5, 5], "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
         
         # Superset B
-        {"Day Name": "Pull", "Exercise": "Cable Bicep Open Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [25, 25, 22.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
-        {"Day Name": "Pull", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [7.5, 7.5, 5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
+        {"Day Name": "Pull", "Exercise": "Cable Bicep Open Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [20, 17.5, 15], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
+        {"Day Name": "Pull", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [3.75, 2.5, 2.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "B"},
         
         # Superset C
         {"Day Name": "Pull", "Exercise": "Dumbbell Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
-        {"Day Name": "Pull", "Exercise": "Trapezoid Raises", "Sets": 3, "Target Reps": "15", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
+        {"Day Name": "Pull", "Exercise": "Trapezoid Raises", "Sets": 3, "Target Reps": "12", "Weight Input": [24, 22, 20], "Strategy": "linear", "Rounding": 2, "Superset Group": "C"},
     ],
 
     3: [ # Day 3: Lower Body
         # Superset A
-        {"Day Name": "Lower Body", "Exercise": "Hip Abduction Machine", "Sets": 3, "Target Reps": "20", "Weight Input": 105, "Strategy": "linear", "Rounding": 5, "Superset Group": "A"},
-        {"Day Name": "Lower Body", "Exercise": "Glute Machine", "Sets": 3, "Target Reps": "15", "Weight Input": 45, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
+        {"Day Name": "Lower Body", "Exercise": "Hip Abduction Machine", "Sets": 3, "Target Reps": "20", "Weight Input": [105, 95, 85], "Strategy": "linear", "Rounding": 10, "Superset Group": "A"},
+        {"Day Name": "Lower Body", "Exercise": "Glute Machine", "Sets": 3, "Target Reps": "15", "Weight Input": [45, 35, 35], "Strategy": "linear", "Rounding": 10, "Superset Group": "A"},
         
         # Superset B
-        {"Day Name": "Lower Body", "Exercise": "Lying Leg Curls", "Sets": 3, "Target Reps": "12", "Weight Input": 35, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
-        {"Day Name": "Lower Body", "Exercise": "Leg Extensions", "Sets": 3, "Target Reps": "12", "Weight Input": 45, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
+        {"Day Name": "Lower Body", "Exercise": "Lying Leg Curls", "Sets": 3, "Target Reps": "12","Weight Input" : [21, 21, 14],  	"Strategy":"linear","Rounding" :7,"Superset Group":"B"},
+        {"Day Name": "Lower Body", "Exercise": "Leg Extensions", "Sets": 3, "Target Reps": "12","Weight Input" : [40, 35, 30],  	"Strategy":"linear","Rounding" :7,"Superset Group":"B"},
         
         # Superset C
-        {"Day Name": "Lower Body", "Exercise": "Machine Calf Extensions", "Sets": 4, "Target Reps": "15", "Weight Input": 50, "Strategy": "linear", "Rounding": 5, "Superset Group": "C"},
-        {"Day Name": "Lower Body", "Exercise": "Weighted Back Extensions", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 10, 8.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "C"},
+        {"Day Name": "Lower Body", "Exercise": "Machine Calf Extensions", "Sets": 4, "Target Reps": "15", "Weight Input": [50, 45, 40], "Strategy": "linear", "Rounding": 5, "Superset Group": "C"},
+        {"Day Name": "Lower Body", "Exercise": "Weighted Back Extensions", "Sets": 3, "Target Reps": "15", "Weight Input": [10, 5, 5], "Strategy": "linear", "Rounding": 5, "Superset Group": "C"},
         
         # Abs (machine-based, not static)
-        {"Day Name": "Lower Body", "Exercise": "Abdominal Crunch Machine", "Sets": 3, "Target Reps": "15", "Weight Input": 35, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
+        {"Day Name": "Lower Body", "Exercise": "Abdominal Crunch Machine", "Sets": 3, "Target Reps": "15", "Weight Input": [50, 45, 40], "Strategy": "linear", "Rounding": 5, "Superset Group": None},
     ],
 
     4: [ # Day 4: Chest & Back (Volume)
-        {"Day Name": "Chest & Back", "Exercise": "Flat Dumbbell Bench Press", "Sets": 3, "Target Reps": "10", "Weight Input": 30, "Strategy": "linear", "Rounding": 2, "Superset Group": None},
-        {"Day Name": "Chest & Back", "Exercise": "Incline Dumbbell Bench Press", "Sets": 3, "Target Reps": "12", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": None},
-        {"Day Name": "Chest & Back", "Exercise": "Machine Open Row", "Sets": 3, "Target Reps": "12", "Weight Input": 47, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
-        {"Day Name": "Chest & Back", "Exercise": "Closed Grip Lat Pulldown", "Sets": 3, "Target Reps": "12", "Weight Input": 50, "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
+        {"Day Name": "Chest & Back", "Exercise": "Flat Dumbbell Bench Press", "Sets": 3, "Target Reps": "10", "Weight Input": [26, 26, 22], "Strategy": "linear", "Rounding": 2, "Superset Group": None},
+        {"Day Name": "Chest & Back", "Exercise": "Incline Dumbbell Bench Press", "Sets": 3, "Target Reps": "12", "Weight Input": [22, 20, 20], "Strategy": "linear", "Rounding": 2, "Superset Group": None},
+        {"Day Name": "Chest & Back", "Exercise": "Machine Open Row", "Sets": 3, "Target Reps": "12", "Weight Input": [47, 42, 37], "Strategy": "linear", "Rounding": 5, "Superset Group": None},
+        {"Day Name": "Chest & Back", "Exercise": "Closed Grip Lat Pulldown", "Sets": 3, "Target Reps": "12", "Weight Input": [50, 45, 40], "Strategy": "linear", "Rounding": 2.5, "Superset Group": None},
         
         # Superset A (Bodyweight)
         {"Day Name": "Chest & Back", "Exercise": "Push Ups", "Sets": 3, "Target Reps": "Failure", "Weight Input": [0, 0, 0], "Strategy": "linear", "Rounding": 0, "Superset Group": "A"},
@@ -124,20 +124,20 @@ daily_workouts = {
 
     5: [ # Day 5: Arms (Pump)
         # Superset A — synced with Day 1 anchor weights
-        {"Day Name": "Arms", "Exercise": "Overhead DB Tricep Ext", "Sets": 3, "Target Reps": "12", "Weight Input": 24, "Strategy": "linear", "Rounding": 2, "Superset Group": "A"},
-        {"Day Name": "Arms", "Exercise": "Open DB Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 1, "Superset Group": "A"},
+        {"Day Name": "Arms", "Exercise": "Overhead Cable Tricep Ext", "Sets": 4, "Target Reps": "12", "Weight Input": [65, 60, 55, 50], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
+        {"Day Name": "Arms", "Exercise": "Open Cable Curls", "Sets": 4, "Target Reps": "12", "Weight Input": [20, 20, 17.5, 15], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "A"},
         
         # Superset B — Tricep Rope uses same 20kg anchor as Day 1 Pushdowns
-        {"Day Name": "Arms", "Exercise": "Tricep Rope Pulldowns", "Sets": 3, "Target Reps": "15", "Weight Input": 20, "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
-        {"Day Name": "Arms", "Exercise": "DB Hammer Curls", "Sets": 3, "Target Reps": "12", "Weight Input": [18, 18, 16], "Strategy": "linear", "Rounding": 1, "Superset Group": "B"},
+        {"Day Name": "Arms", "Exercise": "Tricep Rope Pulldowns", "Sets": 4, "Target Reps": "15", "Weight Input": [85, 75, 70, 65], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "B"},
+        {"Day Name": "Arms", "Exercise": "DB Hammer Curls", "Sets": 4, "Target Reps": "12", "Weight Input": [18, 18, 16, 16], "Strategy": "linear", "Rounding": 2, "Superset Group": "B"},
         
         # Superset C — small muscle, explicit arrays
-        {"Day Name": "Arms", "Exercise": "DB Lateral Raises", "Sets": 3, "Target Reps": "20", "Weight Input": [10, 10, 8], "Strategy": "linear", "Rounding": 1, "Superset Group": "C"},
-        {"Day Name": "Arms", "Exercise": "Cable Face Pulls", "Sets": 3, "Target Reps": "20", "Weight Input": [25, 25, 22.5], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
+        {"Day Name": "Arms", "Exercise": "DB Lateral Raises", "Sets": 3, "Target Reps": "20", "Weight Input": [8, 7, 6], "Strategy": "linear", "Rounding": 1, "Superset Group": "C"},
+        {"Day Name": "Arms", "Exercise": "Cable Face Pulls", "Sets": 3, "Target Reps": "20", "Weight Input": [55, 50, 45], "Strategy": "linear", "Rounding": 2.5, "Superset Group": "C"},
         
         # Superset D — small muscle, explicit arrays (synced w/ Day 1 Lateral Cable & Day 2 Reverse Flyes)
-        {"Day Name": "Arms", "Exercise": "Cable Lateral Raises", "Sets": 3, "Target Reps": "15", "Weight Input": [5, 5, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
-        {"Day Name": "Arms", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [5, 5, 3.75], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
+        {"Day Name": "Arms", "Exercise": "Cable Lateral Raises", "Sets": 3, "Target Reps": "15", "Weight Input": [3.75, 2.5, 2.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
+        {"Day Name": "Arms", "Exercise": "Reverse Cable Flyes", "Sets": 3, "Target Reps": "15", "Weight Input": [3.75, 2.5, 2.5], "Strategy": "linear", "Rounding": 1.25, "Superset Group": "D"},
     ]
 }
 

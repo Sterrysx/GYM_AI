@@ -152,10 +152,10 @@ function MetricCard({ icon: Icon, label, value, unit, color, delta, sub }) {
   const TrendIcon = dir === 'up' ? TrendingUp : dir === 'down' ? TrendingDown : Minus;
   const tc = dir === 'up' ? 'text-rose-400' : dir === 'down' ? 'text-emerald-400' : 'text-zinc-600';
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-2.5 py-2.5 flex items-center gap-2 min-w-0 overflow-hidden">
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 flex items-center gap-1.5 min-w-0 overflow-hidden">
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${color}18` }}>
-        <Icon size={16} style={{ color }} />
+        <Icon size={14} style={{ color }} />
       </div>
       <div className="min-w-0 flex-1 overflow-hidden">
         <p className="text-[0.55rem] text-zinc-500 uppercase tracking-widest truncate">{label}</p>

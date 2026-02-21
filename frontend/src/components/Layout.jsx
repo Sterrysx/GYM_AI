@@ -33,7 +33,10 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
       <header className="sticky top-0 z-10 bg-black border-b border-zinc-800 px-4 pb-3 pt-safe" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         {/* Title row */}
         <div className="flex items-center justify-between mb-2.5">
-          <h1 className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
+          <h1
+            onClick={() => onViewChange('stats')}
+            className="text-sm font-semibold uppercase tracking-widest text-zinc-500 cursor-pointer active:opacity-60"
+          >
             Zero-Idle Gym{' '}
             {week && (
               <span className="text-sky-400 font-normal text-xs">Week {week}</span>
