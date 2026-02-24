@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 600" width="300" height="600">
+  <style>
+    .body-outline { fill: none; stroke: #555; stroke-width: 1.2; }
+    .muscle-region { fill: rgba(100,100,100,0.15); stroke: #666; stroke-width: 0.8; cursor: pointer; transition: fill 0.2s; }
+    .muscle-region:hover { stroke-width: 1.5; }
+    .label { font-family: system-ui, sans-serif; font-size: 7px; fill: #888; text-anchor: middle; pointer-events: none; }
+  </style>
+
+  <!-- ===== BODY OUTLINE ===== -->
+  <!-- Head -->
+  <ellipse class="body-outline" cx="150" cy="42" rx="28" ry="34" />
+  <!-- Neck -->
+  <rect class="body-outline" x="140" y="74" width="20" height="16" rx="4" />
+
+  <!-- Torso outline -->
+  <path class="body-outline" d="M108,90 Q100,100 96,130 L92,200 Q90,230 100,260 L108,280 Q130,290 150,292 Q170,290 192,280 L200,260 Q210,230 208,200 L204,130 Q200,100 192,90 Z" />
+
+  <!-- Left arm -->
+  <path class="body-outline" d="M96,95 Q78,100 65,130 L55,170 Q48,190 52,210 L60,240 Q64,250 68,245 L75,220 Q80,200 78,180 L85,150 Q90,130 96,120" />
+  <!-- Right arm -->
+  <path class="body-outline" d="M204,95 Q222,100 235,130 L245,170 Q252,190 248,210 L240,240 Q236,250 232,245 L225,220 Q220,200 222,180 L215,150 Q210,130 204,120" />
+
+  <!-- Left leg -->
+  <path class="body-outline" d="M108,280 Q105,310 102,360 L98,420 Q96,460 98,500 L102,540 Q104,560 100,580 L96,595 L120,595 L118,580 Q116,560 118,540 L125,460 Q128,420 130,380 L135,330 Q138,300 140,292" />
+  <!-- Right leg -->
+  <path class="body-outline" d="M192,280 Q195,310 198,360 L202,420 Q204,460 202,500 L198,540 Q196,560 200,580 L204,595 L180,595 L182,580 Q184,560 182,540 L175,460 Q172,420 170,380 L165,330 Q162,300 160,292" />
+
+  <!-- ===== MUSCLE REGIONS (clickable) ===== -->
+
+  <!-- CHEST (pectorals) -->
+  <path id="chest" class="muscle-region" data-muscle="chest"
+    d="M118,100 Q125,95 150,98 Q175,95 182,100 L186,115 Q180,135 150,140 Q120,135 114,115 Z" />
+  <text class="label" x="150" y="122">CHEST</text>
+
+  <!-- SHOULDERS (anterior deltoids) — left -->
+  <path id="shoulders-l" class="muscle-region" data-muscle="shoulders"
+    d="M96,92 Q88,95 82,108 L86,128 Q92,118 108,100 Z" />
+  <!-- SHOULDERS — right -->
+  <path id="shoulders-r" class="muscle-region" data-muscle="shoulders"
+    d="M204,92 Q212,95 218,108 L214,128 Q208,118 192,100 Z" />
+  <text class="label" x="82" y="105">DELTS</text>
+  <text class="label" x="218" y="105">DELTS</text>
+
+  <!-- ABS (rectus abdominis) -->
+  <path id="abs" class="muscle-region" data-muscle="abs"
+    d="M130,142 Q130,155 128,180 L126,210 Q125,240 128,265 Q138,275 150,278 Q162,275 172,265 Q175,240 174,210 L172,180 Q170,155 170,142 Q160,148 150,148 Q140,148 130,142 Z" />
+  <text class="label" x="150" y="195">ABS</text>
+  <!-- Ab lines -->
+  <line class="body-outline" x1="150" y1="148" x2="150" y2="275" stroke="#666" stroke-width="0.5" opacity="0.5"/>
+  <line class="body-outline" x1="132" y1="165" x2="168" y2="165" stroke="#666" stroke-width="0.4" opacity="0.4"/>
+  <line class="body-outline" x1="130" y1="190" x2="170" y2="190" stroke="#666" stroke-width="0.4" opacity="0.4"/>
+  <line class="body-outline" x1="129" y1="215" x2="171" y2="215" stroke="#666" stroke-width="0.4" opacity="0.4"/>
+  <line class="body-outline" x1="128" y1="240" x2="172" y2="240" stroke="#666" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- BICEPS — left -->
+  <path id="biceps-l" class="muscle-region" data-muscle="biceps"
+    d="M78,135 Q72,150 68,170 L65,190 Q70,192 80,185 L85,160 Q86,145 84,135 Z" />
+  <!-- BICEPS — right -->
+  <path id="biceps-r" class="muscle-region" data-muscle="biceps"
+    d="M222,135 Q228,150 232,170 L235,190 Q230,192 220,185 L215,160 Q214,145 216,135 Z" />
+  <text class="label" x="73" y="165">BIC</text>
+  <text class="label" x="227" y="165">BIC</text>
+
+  <!-- FOREARMS — left -->
+  <path id="forearms-l" class="muscle-region" data-muscle="forearms"
+    d="M65,192 Q60,210 58,225 L62,240 Q66,238 72,225 L78,205 Q80,195 78,188 Z" />
+  <!-- FOREARMS — right -->
+  <path id="forearms-r" class="muscle-region" data-muscle="forearms"
+    d="M235,192 Q240,210 242,225 L238,240 Q234,238 228,225 L222,205 Q220,195 222,188 Z" />
+  <text class="label" x="66" y="218">FORE</text>
+  <text class="label" x="234" y="218">FORE</text>
+
+  <!-- TRICEPS — left (front view, lateral head visible) -->
+  <path id="triceps-l" class="muscle-region" data-muscle="triceps"
+    d="M88,120 Q84,130 80,145 L78,160 Q82,158 88,145 L92,130 Z" />
+  <!-- TRICEPS — right -->
+  <path id="triceps-r" class="muscle-region" data-muscle="triceps"
+    d="M212,120 Q216,130 220,145 L222,160 Q218,158 212,145 L208,130 Z" />
+
+  <!-- QUADS — left -->
+  <path id="quads-l" class="muscle-region" data-muscle="quads"
+    d="M112,282 Q108,310 105,350 L102,390 Q100,420 104,440 Q112,445 120,440 L128,400 Q132,370 134,340 L136,310 Q138,295 138,290 Q128,288 118,285 Z" />
+  <!-- QUADS — right -->
+  <path id="quads-r" class="muscle-region" data-muscle="quads"
+    d="M188,282 Q192,310 195,350 L198,390 Q200,420 196,440 Q188,445 180,440 L172,400 Q168,370 166,340 L164,310 Q162,295 162,290 Q172,288 182,285 Z" />
+  <text class="label" x="118" y="365">QUADS</text>
+  <text class="label" x="182" y="365">QUADS</text>
+
+  <!-- CALVES — left (front view: tibialis) -->
+  <path id="calves-l" class="muscle-region" data-muscle="calves"
+    d="M104,455 Q100,480 100,510 L102,540 Q106,545 112,540 L118,510 Q120,480 118,455 Q112,450 104,455 Z" />
+  <!-- CALVES — right -->
+  <path id="calves-r" class="muscle-region" data-muscle="calves"
+    d="M196,455 Q200,480 200,510 L198,540 Q194,545 188,540 L182,510 Q180,480 182,455 Q188,450 196,455 Z" />
+  <text class="label" x="108" y="500">CALV</text>
+  <text class="label" x="192" y="500">CALV</text>
+
+</svg>

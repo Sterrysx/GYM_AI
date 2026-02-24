@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 600" width="300" height="600">
+  <style>
+    .body-outline { fill: none; stroke: #555; stroke-width: 1.2; }
+    .muscle-region { fill: rgba(100,100,100,0.15); stroke: #666; stroke-width: 0.8; cursor: pointer; transition: fill 0.2s; }
+    .muscle-region:hover { stroke-width: 1.5; }
+    .label { font-family: system-ui, sans-serif; font-size: 7px; fill: #888; text-anchor: middle; pointer-events: none; }
+  </style>
+
+  <!-- ===== BODY OUTLINE ===== -->
+  <!-- Head -->
+  <ellipse class="body-outline" cx="150" cy="42" rx="28" ry="34" />
+  <!-- Neck -->
+  <rect class="body-outline" x="140" y="74" width="20" height="16" rx="4" />
+
+  <!-- Torso outline (back view) -->
+  <path class="body-outline" d="M108,90 Q100,100 96,130 L92,200 Q90,230 100,260 L108,280 Q130,290 150,292 Q170,290 192,280 L200,260 Q210,230 208,200 L204,130 Q200,100 192,90 Z" />
+
+  <!-- Left arm -->
+  <path class="body-outline" d="M96,95 Q78,100 65,130 L55,170 Q48,190 52,210 L60,240 Q64,250 68,245 L75,220 Q80,200 78,180 L85,150 Q90,130 96,120" />
+  <!-- Right arm -->
+  <path class="body-outline" d="M204,95 Q222,100 235,130 L245,170 Q252,190 248,210 L240,240 Q236,250 232,245 L225,220 Q220,200 222,180 L215,150 Q210,130 204,120" />
+
+  <!-- Left leg -->
+  <path class="body-outline" d="M108,280 Q105,310 102,360 L98,420 Q96,460 98,500 L102,540 Q104,560 100,580 L96,595 L120,595 L118,580 Q116,560 118,540 L125,460 Q128,420 130,380 L135,330 Q138,300 140,292" />
+  <!-- Right leg -->
+  <path class="body-outline" d="M192,280 Q195,310 198,360 L202,420 Q204,460 202,500 L198,540 Q196,560 200,580 L204,595 L180,595 L182,580 Q184,560 182,540 L175,460 Q172,420 170,380 L165,330 Q162,300 160,292" />
+
+  <!-- ===== MUSCLE REGIONS (clickable) ===== -->
+
+  <!-- TRAPS (trapezius) -->
+  <path id="traps" class="muscle-region" data-muscle="traps"
+    d="M130,82 Q140,80 150,80 Q160,80 170,82 L185,92 Q170,88 150,90 Q130,88 115,92 Z" />
+  <text class="label" x="150" y="88">TRAPS</text>
+
+  <!-- REAR DELTS — left -->
+  <path id="rear_delts-l" class="muscle-region" data-muscle="rear_delts"
+    d="M96,92 Q88,95 82,108 L86,128 Q92,118 108,100 Z" />
+  <!-- REAR DELTS — right -->
+  <path id="rear_delts-r" class="muscle-region" data-muscle="rear_delts"
+    d="M204,92 Q212,95 218,108 L214,128 Q208,118 192,100 Z" />
+  <text class="label" x="80" y="105">R.DLT</text>
+  <text class="label" x="220" y="105">R.DLT</text>
+
+  <!-- UPPER BACK (rhomboids/lats upper) -->
+  <path id="back-upper" class="muscle-region" data-muscle="back"
+    d="M115,95 Q130,92 150,93 Q170,92 185,95 L188,120 Q180,130 150,132 Q120,130 112,120 Z" />
+  <text class="label" x="150" y="115">UPPER BACK</text>
+
+  <!-- LATS (latissimus dorsi) — left -->
+  <path id="back-lat-l" class="muscle-region" data-muscle="back"
+    d="M112,122 Q108,140 104,165 L100,195 Q98,210 100,230 L108,245 Q120,248 130,242 L135,210 Q136,180 135,155 L130,132 Q120,130 112,122 Z" />
+  <!-- LATS — right -->
+  <path id="back-lat-r" class="muscle-region" data-muscle="back"
+    d="M188,122 Q192,140 196,165 L200,195 Q202,210 200,230 L192,245 Q180,248 170,242 L165,210 Q164,180 165,155 L170,132 Q180,130 188,122 Z" />
+  <text class="label" x="116" y="185">LAT</text>
+  <text class="label" x="184" y="185">LAT</text>
+
+  <!-- LOWER BACK (erector spinae) -->
+  <path id="lower_back" class="muscle-region" data-muscle="lower_back"
+    d="M130,243 Q140,250 150,252 Q160,250 170,243 L174,265 Q162,278 150,280 Q138,278 126,265 Z" />
+  <text class="label" x="150" y="262">LOW BACK</text>
+
+  <!-- TRICEPS — left (back view, full head) -->
+  <path id="triceps-bl" class="muscle-region" data-muscle="triceps"
+    d="M86,118 Q80,135 75,155 L72,175 Q76,178 82,170 L88,150 Q92,135 94,120 Z" />
+  <!-- TRICEPS — right -->
+  <path id="triceps-br" class="muscle-region" data-muscle="triceps"
+    d="M214,118 Q220,135 225,155 L228,175 Q224,178 218,170 L212,150 Q208,135 206,120 Z" />
+  <text class="label" x="78" y="148">TRI</text>
+  <text class="label" x="222" y="148">TRI</text>
+
+  <!-- GLUTES -->
+  <path id="glutes" class="muscle-region" data-muscle="glutes"
+    d="M112,268 Q120,285 150,288 Q180,285 188,268 L192,280 Q182,298 150,300 Q118,298 108,280 Z" />
+  <text class="label" x="150" y="286">GLUTES</text>
+
+  <!-- HAMSTRINGS — left -->
+  <path id="hamstrings-l" class="muscle-region" data-muscle="hamstrings"
+    d="M110,296 Q107,325 105,355 L102,395 Q100,420 104,440 Q112,445 120,440 L126,400 Q130,370 132,340 L134,310 Q135,300 134,296 Q122,298 110,296 Z" />
+  <!-- HAMSTRINGS — right -->
+  <path id="hamstrings-r" class="muscle-region" data-muscle="hamstrings"
+    d="M190,296 Q193,325 195,355 L198,395 Q200,420 196,440 Q188,445 180,440 L174,400 Q170,370 168,340 L166,310 Q165,300 166,296 Q178,298 190,296 Z" />
+  <text class="label" x="118" y="370">HAMS</text>
+  <text class="label" x="182" y="370">HAMS</text>
+
+  <!-- CALVES (back view: gastrocnemius) — left -->
+  <path id="calves-bl" class="muscle-region" data-muscle="calves"
+    d="M104,445 Q98,468 98,495 L100,530 Q105,540 112,535 L118,495 Q120,468 118,445 Q112,442 104,445 Z" />
+  <!-- CALVES — right -->
+  <path id="calves-br" class="muscle-region" data-muscle="calves"
+    d="M196,445 Q202,468 202,495 L200,530 Q195,540 188,535 L182,495 Q180,468 182,445 Q188,442 196,445 Z" />
+  <text class="label" x="108" y="492">CALV</text>
+  <text class="label" x="192" y="492">CALV</text>
+
+</svg>

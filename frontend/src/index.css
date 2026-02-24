@@ -38,3 +38,12 @@ input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Slide-up animation for muscle detail panel */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out forwards;
+}

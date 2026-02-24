@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Dumbbell, Check, Loader2, Pencil } from 'lucide-react';
 import { logSet, editSet } from '../api/client';
 
-export default function BenchCard({ exercise, week, day, onLogged, onError }) {
+export default function BenchCard({ exercise, week, day, onLogged, onError, onReload }) {
   const {
     exercise_id: exerciseId,
     exercise: name,
@@ -39,6 +39,7 @@ export default function BenchCard({ exercise, week, day, onLogged, onError }) {
       }
       setLogState('logged');
       onLogged?.(`${name} logged.`);
+      onReload?.();
     } catch (err) {
       setLogState('idle');
       onError?.(err.response?.data?.detail ?? err.message);

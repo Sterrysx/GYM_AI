@@ -14,9 +14,13 @@ export default defineConfig({
       '/generate-next-week': 'http://localhost:8000',
       '/stats': 'http://localhost:8000',
       '/complete-day': 'http://localhost:8000',
+      '/complete-exercise': 'http://localhost:8000',
+      '/has-completed-days': 'http://localhost:8000',
+      '/progression': 'http://localhost:8000',
       '/dashboard': 'http://localhost:8000',
       '/targets': 'http://localhost:8000',
-      '/webhook': 'http://127.0.0.1:8000', // Added this for your Apple Health testing
+      '/muscle-levels': 'http://localhost:8000',
+      '/webhook': 'http://127.0.0.1:8000',
       '/chat': 'http://localhost:8000',
       '/plan': 'http://localhost:8000',
     }

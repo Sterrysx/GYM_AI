@@ -10,7 +10,7 @@ import { generateNextWeek } from '../api/client';
  * - Tab navigation: Dashboard | Workout
  * - Day selector (visible only on Workout tab)
  */
-export default function Layout({ week, activeDay, onSelectDay, onGenerated, showToast, activeView, onViewChange, children }) {
+export default function Layout({ week, activeDay, onSelectDay, onGenerated, showToast, activeView, onViewChange, strengthUnlocked = true, children }) {
   const [generating, setGenerating] = useState(false);
 
   const handleGenerate = async () => {
@@ -65,20 +65,27 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
             { key: 'progression', icon: TrendingUp,      label: 'Strength' },
             { key: 'plan',        icon: ClipboardList,   label: 'Plan' },
             { key: 'workout',     icon: Dumbbell,        label: 'Workout' },
-          ].map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              onClick={() => onViewChange(key)}
-              className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeView === key
-                  ? 'bg-zinc-800 text-zinc-200'
-                  : 'text-zinc-500 active:bg-zinc-900'
-              }`}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
+          ].map(({ key, icon: Icon, label }) => {
+            const locked = key === 'progression' && !strengthUnlocked;
+            return (
+              <button
+                key={key}
+                onClick={() => !locked && onViewChange(key)}
+                disabled={locked}
+                className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  locked
+                    ? 'text-zinc-700 cursor-not-allowed'
+                    : activeView === key
+                      ? 'bg-zinc-800 text-zinc-200'
+                      : 'text-zinc-500 active:bg-zinc-900'
+                }`}
+                title={locked ? 'Complete a workout day to unlock' : undefined}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Day selector — only on Workout tab */}

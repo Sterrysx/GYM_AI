@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Scale, Activity, Dumbbell, Loader2,
   TrendingDown, TrendingUp, Minus, Footprints, Flame, Moon,
-  Target, Settings2, X, Check,
+  Target, Settings2, X, Check, ArrowDown, ArrowUp, Zap,
 } from 'lucide-react';
 import { fetchMetrics, fetchTargets, updateTargets } from '../api/client';
 import {
@@ -152,25 +152,25 @@ function MetricCard({ icon: Icon, label, value, unit, color, delta, sub }) {
   const TrendIcon = dir === 'up' ? TrendingUp : dir === 'down' ? TrendingDown : Minus;
   const tc = dir === 'up' ? 'text-rose-400' : dir === 'down' ? 'text-emerald-400' : 'text-zinc-600';
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 flex items-center gap-1.5 min-w-0 overflow-hidden">
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-2 py-2 flex items-center gap-1.5 min-w-0">
       <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${color}18` }}>
         <Icon size={14} style={{ color }} />
       </div>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <p className="text-[0.55rem] text-zinc-500 uppercase tracking-widest truncate">{label}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-lg font-black leading-none" style={{ color }}>{value ?? '—'}</span>
-          {unit && <span className="text-[0.6rem] text-zinc-500">{unit}</span>}
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.5rem] text-zinc-500 uppercase tracking-widest leading-tight">{label}</p>
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-base font-black leading-none" style={{ color }}>{value ?? '—'}</span>
+          {unit && <span className="text-[0.5rem] text-zinc-500">{unit}</span>}
+          {delta != null && (
+            <span className={`flex items-center gap-0.5 ${tc} ml-auto shrink-0`}>
+              <TrendIcon size={10} />
+              <span className="text-[0.5rem] font-bold">{Math.abs(delta).toFixed(1)}</span>
+            </span>
+          )}
         </div>
-        {sub && <p className="text-[0.5rem] text-zinc-600 mt-0.5 truncate">{sub}</p>}
+        {sub && <p className="text-[0.45rem] text-zinc-600 mt-0.5 leading-tight">{sub}</p>}
       </div>
-      {delta != null && (
-        <div className={`flex items-center gap-0.5 ${tc} shrink-0`}>
-          <TrendIcon size={12} />
-          <span className="text-[0.6rem] font-bold">{Math.abs(delta).toFixed(1)}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -223,11 +223,86 @@ function TargetModal({ targets, onSave, onClose }) {
   );
 }
 
+// ── Body Recomposition Progress ────────────────────────────────────────────────
+function RecompBar({ label, icon: Icon, color, baseline, current, target, unit, inverse = false }) {
+  if (baseline == null || current == null || target == null) return null;
+  const range = inverse ? (baseline - target) : (target - baseline);
+  const progress = inverse ? (baseline - current) : (current - baseline);
+  const pct = range > 0 ? Math.min(100, Math.max(0, (progress / range) * 100)) : 0;
+  const remaining = inverse ? (current - target) : (target - current);
+  const direction = inverse ? 'decrease' : 'increase';
+  const DirIcon = inverse ? ArrowDown : ArrowUp;
+  const dirColor = inverse ? C.purple : C.emerald;
+
+  return (
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-4 space-y-3">
+      {/* Title row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
+            <Icon size={14} style={{ color }} />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">{label}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <DirIcon size={12} style={{ color: dirColor }} />
+          <span className="text-lg font-black" style={{ color }}>{pct.toFixed(1)}%</span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative">
+        <div className="h-3.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-1000 ease-out"
+            style={{
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${color}99, ${color})`,
+            }}
+          />
+        </div>
+        {/* Current marker */}
+        {pct > 2 && pct < 98 && (
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-white/80 rounded"
+            style={{ left: `${pct}%` }}
+          />
+        )}
+      </div>
+
+      {/* Start / Current / Goal labels */}
+      <div className="flex items-end justify-between">
+        <div className="text-left">
+          <p className="text-[0.5rem] text-zinc-600 uppercase tracking-wider font-semibold">Start</p>
+          <p className="text-xs font-bold text-zinc-500">{baseline}{unit}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[0.5rem] uppercase tracking-wider font-semibold" style={{ color }}>Current</p>
+          <p className="text-sm font-black" style={{ color }}>{current}{unit}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[0.5rem] text-zinc-600 uppercase tracking-wider font-semibold">Goal</p>
+          <p className="text-xs font-bold text-zinc-500">{target}{unit}</p>
+        </div>
+      </div>
+
+      {/* Remaining */}
+      <p className="text-[0.55rem] text-zinc-600 text-center">
+        {remaining > 0
+          ? `${Math.abs(remaining).toFixed(1)}${unit} to ${direction}`
+          : remaining === 0
+            ? 'Target reached!'
+            : `${Math.abs(remaining).toFixed(1)}${unit} past target!`}
+      </p>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Dashboard() {
   const [bodyComp, setBodyComp]       = useState([]);
   const [appleHealth, setAppleHealth] = useState([]);
-  const [targets, setTargets]         = useState({ weight_kg: 67.5, bodyfat_pct: 13, muscle_kg: 58 });
+  const [targets, setTargets]         = useState({ weight_kg: 67.5, bodyfat_pct: 13, muscle_kg: 57 });
   const [range, setRange]             = useState('lifetime');
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
@@ -268,6 +343,7 @@ export default function Dashboard() {
   const latestB = bodyComp.at(-1)    ?? {};
   const prevB   = bodyComp.at(-2)    ?? null;
   const latestA = appleHealth.at(-1) ?? {};
+  const baselineB = bodyComp.at(0)   ?? {};
 
   const d = (key) => prevB ? (latestB[key] ?? 0) - (prevB[key] ?? 0) : null;
 
@@ -279,6 +355,48 @@ export default function Dashboard() {
 
       {/* ── Time range selector ── */}
       <RangeBar value={range} onChange={handleRangeChange} />
+
+      {/* ══ BODY RECOMPOSITION ══ */}
+      {bodyComp.length > 0 && (
+        <>
+          <div className="flex items-center gap-2 px-1 pt-2">
+            <Zap size={13} className="text-amber-400" />
+            <p className="text-[0.6rem] text-zinc-600 uppercase tracking-widest font-bold">Body Recomposition</p>
+          </div>
+
+          <RecompBar
+            label="Body Fat"
+            icon={Activity}
+            color={C.purple}
+            baseline={baselineB.BodyFat_pct}
+            current={latestB.BodyFat_pct}
+            target={targets.bodyfat_pct}
+            unit="%"
+            inverse
+          />
+
+          <RecompBar
+            label="Muscle Mass"
+            icon={Dumbbell}
+            color={C.emerald}
+            baseline={baselineB.MuscleMass_kg}
+            current={latestB.MuscleMass_kg}
+            target={targets.muscle_kg}
+            unit=" kg"
+          />
+
+          <RecompBar
+            label="Weight"
+            icon={Scale}
+            color={C.cyan}
+            baseline={baselineB.Weight_kg}
+            current={latestB.Weight_kg}
+            target={targets.weight_kg}
+            unit=" kg"
+            inverse
+          />
+        </>
+      )}
 
       {/* ══ TARGETS ══ */}
       <div className="flex items-center justify-between px-1 pt-1">

@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pandas as pd
 import requests as http_requests
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -39,7 +39,7 @@ METRICS_DIR.mkdir(parents=True, exist_ok=True)
 CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Default targets ──────────────────────────────────────────────────────────
-DEFAULT_TARGETS = {"weight_kg": 67.5, "bodyfat_pct": 13.0, "muscle_kg": 58.0}
+DEFAULT_TARGETS = {"weight_kg": 67.5, "bodyfat_pct": 13.0, "muscle_kg": 57.0}
 
 def _load_targets() -> dict:
     if TARGETS_JSON.exists():
@@ -462,9 +462,23 @@ def edit_set(payload: EditSetPayload):
 
 @app.post("/complete-day")
 def complete_day(week_id: int, day: int):
+    """Mark an entire day as complete.
+    - Zero-fills any unlogged sets (actual_weight=0, actual_reps=0).
+    - Dumps the final state to the data-lake JSON file.
+    """
     conn = _get_db()
     cursor = conn.cursor()
 
+    # 1) Zero-fill unlogged sets
+    cursor.execute("""
+        UPDATE workout_logs
+        SET actual_weight = 0, actual_reps = 0, logged_at = datetime('now')
+        WHERE week_id = ? AND day = ? AND actual_reps IS NULL AND strategy != 'static'
+    """, (week_id, day))
+    zeroed = cursor.rowcount
+    conn.commit()
+
+    # 2) Dump the completed day to JSON archive
     cursor.execute("""
         SELECT exercise_id, exercise_name, set_number, target_weight, target_reps,
                actual_weight, actual_reps, rpe, strategy
@@ -508,7 +522,46 @@ def complete_day(week_id: int, day: int):
     filepath = WORKOUTS_DIR / filename
     filepath.write_text(json.dumps(payload, indent=2))
 
-    return {"status": "dumped", "file": str(filepath.relative_to(PROJECT_ROOT))}
+    return {"status": "completed", "zeroed_sets": zeroed, "file": str(filepath.relative_to(PROJECT_ROOT))}
+
+
+# ── Complete Exercise(s) ─────────────────────────────────────────────────────
+
+@app.post("/complete-exercise")
+def complete_exercise(week_id: int, day: int, exercise_ids: list[str] = Body(...)):
+    """Zero-fill unlogged sets for specific exercise(s).
+    Accepts a list of exercise_ids so a whole superset can be completed at once.
+    """
+    conn = _get_db()
+    cursor = conn.cursor()
+    placeholders = ",".join("?" for _ in exercise_ids)
+    cursor.execute(f"""
+        UPDATE workout_logs
+        SET actual_weight = 0, actual_reps = 0, logged_at = datetime('now')
+        WHERE week_id = ? AND day = ? AND exercise_id IN ({placeholders})
+              AND actual_reps IS NULL AND strategy != 'static'
+    """, [week_id, day] + exercise_ids)
+    zeroed = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return {"status": "completed", "zeroed_sets": zeroed}
+
+
+# ── Has completed days (for gating) ─────────────────────────────────────────
+
+@app.get("/has-completed-days")
+def has_completed_days():
+    """Returns whether the user has logged at least one exercise set."""
+    conn = _get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT COUNT(*) FROM workout_logs
+        WHERE strategy != 'static' AND actual_reps IS NOT NULL
+        LIMIT 1
+    """)
+    count = cursor.fetchone()[0]
+    conn.close()
+    return {"has_completed": count > 0}
 
 
 @app.post("/generate-next-week")
@@ -688,6 +741,162 @@ def get_all_progressions():
 
     conn.close()
     return {"progressions": results}
+
+
+# ── Muscle Levels (RPG-style) ────────────────────────────────────────────────
+
+# Exercise → primary and secondary muscle groups (loaded once on startup)
+EXERCISES_JSON = Path(__file__).resolve().parent / "exercises.json"
+_EXERCISE_MUSCLES: dict = {}
+
+def _load_exercise_muscles():
+    global _EXERCISE_MUSCLES
+    if EXERCISES_JSON.exists():
+        try:
+            _EXERCISE_MUSCLES = json.loads(EXERCISES_JSON.read_text())
+        except Exception:
+            pass
+
+_load_exercise_muscles()
+
+# XP thresholds per level — volume-based (total kg lifted for that muscle)
+# Level 1 = 0 XP, Level 2 = 200, … grows exponentially
+_LEVEL_THRESHOLDS = [0]
+_xp = 0
+for _i in range(1, 100):
+    _xp += int(150 * (1.25 ** _i))
+    _LEVEL_THRESHOLDS.append(_xp)
+
+# Friendly display names
+_MUSCLE_DISPLAY = {
+    "chest": "Chest",
+    "shoulders": "Shoulders",
+    "triceps": "Triceps",
+    "back": "Back",
+    "biceps": "Biceps",
+    "forearms": "Forearms",
+    "rear_delts": "Rear Delts",
+    "traps": "Traps",
+    "glutes": "Glutes",
+    "hamstrings": "Hamstrings",
+    "quads": "Quads",
+    "calves": "Calves",
+    "lower_back": "Lower Back",
+    "abs": "Abs",
+    "upper_back": "Upper Back",
+    "hip_abductors": "Hip Abductors",
+}
+
+# Target levels per muscle group (aspirational)
+_MUSCLE_TARGETS = {
+    "chest": 8, "shoulders": 7, "triceps": 6, "back": 8, "biceps": 6,
+    "forearms": 4, "rear_delts": 5, "traps": 5, "glutes": 6,
+    "hamstrings": 6, "quads": 7, "calves": 5, "lower_back": 5, "abs": 6,
+    "upper_back": 5, "hip_abductors": 3,
+}
+
+
+def _xp_to_level(xp: float) -> tuple[int, float, float]:
+    """Return (level, xp_into_level, xp_needed_for_next)."""
+    level = 0
+    for i, threshold in enumerate(_LEVEL_THRESHOLDS):
+        if xp >= threshold:
+            level = i
+        else:
+            break
+    if level + 1 < len(_LEVEL_THRESHOLDS):
+        floor_xp = _LEVEL_THRESHOLDS[level]
+        ceil_xp = _LEVEL_THRESHOLDS[level + 1]
+        return level, xp - floor_xp, ceil_xp - floor_xp
+    return level, 0, 1
+
+
+@app.get("/muscle-levels")
+def get_muscle_levels():
+    """
+    Compute RPG-style levels for every muscle group.
+    XP = total volume (weight × reps) across all exercises targeting that muscle.
+    Primary muscles get full XP, secondary muscles get 40%.
+    """
+    conn = _get_db()
+    cursor = conn.cursor()
+
+    # Grab all logged sets
+    cursor.execute("""
+        SELECT exercise_id, exercise_name, actual_weight, actual_reps
+        FROM workout_logs
+        WHERE actual_reps IS NOT NULL AND actual_weight IS NOT NULL
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Accumulate XP per muscle
+    muscle_xp: dict[str, float] = {}
+    muscle_exercises: dict[str, dict] = {}  # muscle → {ex_id: {name, volume, sets, reps}}
+
+    for r in rows:
+        ex_id = r["exercise_id"]
+        weight = r["actual_weight"] or 0
+        reps = r["actual_reps"] or 0
+        volume = weight * reps
+
+        ex_info = _EXERCISE_MUSCLES.get(ex_id, {})
+        primary = ex_info.get("muscle_group")
+        secondaries = ex_info.get("secondary_muscles", [])
+
+        targets = []
+        if primary:
+            targets.append((primary, 1.0))
+        for sec in secondaries:
+            targets.append((sec, 0.4))
+
+        for muscle, factor in targets:
+            xp_gain = volume * factor
+            muscle_xp[muscle] = muscle_xp.get(muscle, 0) + xp_gain
+
+            if muscle not in muscle_exercises:
+                muscle_exercises[muscle] = {}
+            if ex_id not in muscle_exercises[muscle]:
+                ex_name = ex_info.get("name", r["exercise_name"])
+                muscle_exercises[muscle][ex_id] = {
+                    "exercise_id": ex_id,
+                    "name": ex_name,
+                    "volume": 0, "sets": 0, "reps": 0,
+                }
+            entry = muscle_exercises[muscle][ex_id]
+            entry["volume"] += volume * factor
+            entry["sets"] += 1
+            entry["reps"] += reps
+
+    # Build response
+    all_muscles = set(list(muscle_xp.keys()) + list(_MUSCLE_DISPLAY.keys()))
+    levels = []
+    for muscle in sorted(all_muscles):
+        xp = muscle_xp.get(muscle, 0)
+        level, xp_in, xp_need = _xp_to_level(xp)
+        target_lvl = _MUSCLE_TARGETS.get(muscle, 5)
+
+        exercises_list = sorted(
+            muscle_exercises.get(muscle, {}).values(),
+            key=lambda e: e["volume"], reverse=True
+        )
+        # Round volumes
+        for e in exercises_list:
+            e["volume"] = round(e["volume"], 1)
+
+        levels.append({
+            "muscle": muscle,
+            "display_name": _MUSCLE_DISPLAY.get(muscle, muscle.replace("_", " ").title()),
+            "level": level,
+            "target_level": target_lvl,
+            "xp": round(xp, 1),
+            "xp_in_level": round(xp_in, 1),
+            "xp_for_next": round(xp_need, 1),
+            "xp_pct": round(xp_in / xp_need * 100, 1) if xp_need > 0 else 100,
+            "exercises": exercises_list,
+        })
+
+    return {"muscle_levels": levels}
 
 
 # ── Dashboard ────────────────────────────────────────────────────────────────

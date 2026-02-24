@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import WorkoutFeed from './components/WorkoutFeed';
 import StatsPage from './components/StatsPage';
@@ -9,11 +9,22 @@ import Toast from './components/Toast';
 import ChatBubble from './components/ChatBubble';
 import { useWorkout } from './hooks/useWorkout';
 import { useToast } from './hooks/useToast';
+import { hasCompletedDays } from './api/client';
 
 export default function App() {
   const [activeView, setActiveView] = useState('stats');
   const { week, day, exercises, loading, error, load } = useWorkout();
   const { toast, showToast } = useToast();
+  const [strengthUnlocked, setStrengthUnlocked] = useState(false);
+
+  // Check if strength tab should be unlocked
+  useEffect(() => {
+    hasCompletedDays().then(setStrengthUnlocked).catch(() => {});
+  }, []);
+
+  const checkStrengthUnlock = () => {
+    hasCompletedDays().then(setStrengthUnlocked).catch(() => {});
+  };
 
   const handleSelectDay = (dayId) => {
     setActiveView('workout');
@@ -34,6 +45,7 @@ export default function App() {
         showToast={showToast}
         activeView={activeView}
         onViewChange={setActiveView}
+        strengthUnlocked={strengthUnlocked}
       >
         {activeView === 'stats' && <StatsPage />}
         {activeView === 'metrics' && <Dashboard />}
@@ -48,6 +60,7 @@ export default function App() {
             error={error}
             onError={(msg) => showToast(msg, true)}
             showToast={showToast}
+            onDayCompleted={() => { if (day) load(day); checkStrengthUnlock(); }}
           />
         )}
       </Layout>

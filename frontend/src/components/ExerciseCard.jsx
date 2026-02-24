@@ -2,11 +2,13 @@
  * ExerciseCard — single exercise with per-set logging.
  * Shows already-logged sets as completed, allows editing.
  */
+import { useState } from 'react';
 import SetRow from './SetRow';
 import { SUPERSET_COLORS } from '../lib/constants';
-import { Check } from 'lucide-react';
+import { Check, Loader2, CheckCircle2 } from 'lucide-react';
+import { completeExercise } from '../api/client';
 
-export default function ExerciseCard({ exercise, week, day, onError, showToast }) {
+export default function ExerciseCard({ exercise, week, day, onError, showToast, onReload }) {
   const {
     exercise_id: exerciseId,
     exercise: name,
@@ -25,10 +27,36 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast }
     ? SUPERSET_COLORS[superset_group]?.border ?? ''
     : '';
 
+  const [completing, setCompleting] = useState(false);
+
+  // Track locally-logged sets so we don't reload after each individual log
+  const [locallyLogged, setLocallyLogged] = useState(0);
+  const initiallyLogged = setsData.filter((s) => s?.logged).length;
+  const localAllLogged = allLogged || (initiallyLogged + locallyLogged) >= numSets;
+  const hasUnlogged = !localAllLogged;
+
+  const handleSetLogged = (setIndex) => {
+    setLocallyLogged((n) => n + 1);
+    showToast?.(`${name} S${setIndex + 1} logged`);
+  };
+
+  const handleComplete = async () => {
+    setCompleting(true);
+    try {
+      await completeExercise(week, day, [exerciseId]);
+      showToast?.(`${name} completed`);
+      onReload?.();
+    } catch (err) {
+      onError?.(err.response?.data?.detail ?? err.message);
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   return (
     <div
       className={`mx-3 my-2 bg-zinc-950 rounded-xl border overflow-hidden ${
-        allLogged
+        localAllLogged
           ? 'border-emerald-800/50'
           : `border-zinc-800 ${superset_group ? `border-l-4 ${supersetBorder}` : ''}`
       }`}
@@ -36,7 +64,7 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast }
       <div className="flex items-start justify-between px-4 pt-3 pb-1 gap-2">
         <div className="flex items-center gap-2">
           <span className="text-base font-bold leading-snug">{name}</span>
-          {allLogged && <Check size={14} className="text-emerald-400" strokeWidth={3} />}
+          {localAllLogged && <Check size={14} className="text-emerald-400" strokeWidth={3} />}
         </div>
         <div className="flex items-center gap-1.5">
           {equipment && (
@@ -77,11 +105,25 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast }
             weekId={week}
             day={day}
             exerciseId={exerciseId}
-            onSetLogged={() => showToast?.(`${name} S${i + 1} logged`)}
+            onSetLogged={() => handleSetLogged(i)}
             onError={onError}
           />
         ))}
       </div>
+
+      {/* Complete exercise button */}
+      {hasUnlogged && !localAllLogged && (
+        <div className="px-3 pb-2.5">
+          <button
+            onClick={handleComplete}
+            disabled={completing}
+            className="w-full py-2 rounded-lg text-[0.7rem] font-semibold uppercase tracking-wide border border-zinc-700 text-zinc-400 active:bg-zinc-800 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+          >
+            {completing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            {completing ? 'Completing…' : 'Complete Exercise'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

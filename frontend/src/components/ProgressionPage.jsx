@@ -1,10 +1,11 @@
 /**
  * ProgressionPage — Strength progression tracking for every exercise.
- * Shows: total reps, total weight, avg weight/rep, per-session history.
+ * Shows: Muscle Map (RPG body) + per-exercise list view.
  */
 import { useState, useEffect } from 'react';
-import { TrendingUp, ChevronDown, ChevronUp, Loader2, Dumbbell } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronUp, Loader2, Dumbbell, Swords, List } from 'lucide-react';
 import { fetchAllProgressions, fetchProgression } from '../api/client';
+import MuscleMap from './MuscleMap';
 
 function StatBadge({ label, value, unit }) {
   return (
@@ -149,7 +150,7 @@ function ExerciseRow({ exercise }) {
   );
 }
 
-export default function ProgressionPage() {
+function ExerciseListView() {
   const [progressions, setProgressions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -197,6 +198,42 @@ export default function ProgressionPage() {
       {progressions.map((ex) => (
         <ExerciseRow key={ex.exercise_id} exercise={ex} />
       ))}
+    </div>
+  );
+}
+
+export default function ProgressionPage() {
+  const [tab, setTab] = useState('map');
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="flex items-center justify-center gap-2 px-4 pt-3 pb-1">
+        <button
+          onClick={() => setTab('map')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all cursor-pointer ${
+            tab === 'map'
+              ? 'bg-purple-500/20 border border-purple-500/40 text-purple-400'
+              : 'bg-zinc-800/60 border border-zinc-700/50 text-zinc-500'
+          }`}
+        >
+          <Swords size={12} />
+          Muscle Map
+        </button>
+        <button
+          onClick={() => setTab('list')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all cursor-pointer ${
+            tab === 'list'
+              ? 'bg-sky-500/20 border border-sky-500/40 text-sky-400'
+              : 'bg-zinc-800/60 border border-zinc-700/50 text-zinc-500'
+          }`}
+        >
+          <List size={12} />
+          Exercises
+        </button>
+      </div>
+
+      {tab === 'map' ? <MuscleMap /> : <ExerciseListView />}
     </div>
   );
 }

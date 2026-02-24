@@ -58,10 +58,31 @@ export async function fetchStats() {
 
 /**
  * Mark a day as complete and dump its data to the data lake.
+ * Zero-fills any unlogged sets.
  */
 export async function completeDay(weekId, day) {
   const { data } = await api.post(`/complete-day?week_id=${weekId}&day=${day}`);
   return data;
+}
+
+/**
+ * Complete specific exercise(s) — zero-fills unlogged sets.
+ * Pass an array of exercise_ids (works for single or superset).
+ */
+export async function completeExercise(weekId, day, exerciseIds) {
+  const { data } = await api.post(
+    `/complete-exercise?week_id=${weekId}&day=${day}`,
+    exerciseIds,
+  );
+  return data;
+}
+
+/**
+ * Check if user has completed at least one workout day.
+ */
+export async function hasCompletedDays() {
+  const { data } = await api.get('/has-completed-days');
+  return data.has_completed;
 }
 
 /**
@@ -146,5 +167,13 @@ export async function fetchProgression(exerciseId) {
  */
 export async function fetchAllProgressions() {
   const { data } = await api.get('/progression');
+  return data;
+}
+
+/**
+ * Fetch RPG-style muscle levels for the muscle map.
+ */
+export async function fetchMuscleLevels() {
+  const { data } = await api.get('/muscle-levels');
   return data;
 }
