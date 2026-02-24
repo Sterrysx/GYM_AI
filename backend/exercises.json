@@ -8,7 +8,7 @@
     },
     "low_cable_flyes": {
       "name": "Low Cable Flyes",
-      "equipment": "cable_2_pulley",
+      "equipment": "cable_1_pulley",
       "muscle_group": "chest",
       "secondary_muscles": []
     },
@@ -20,7 +20,7 @@
     },
     "overhead_cable_tricep_ext": {
       "name": "Overhead Tricep Extension (Cable)",
-      "equipment": "cable_1_pulley",
+      "equipment": "cable_2_pulley",
       "muscle_group": "triceps",
       "secondary_muscles": []
     },
@@ -32,7 +32,7 @@
     },
     "tricep_pushdowns": {
       "name": "Tricep Pushdowns",
-      "equipment": "cable_1_pulley",
+      "equipment": "cable_2_pulley",
       "muscle_group": "triceps",
       "secondary_muscles": []
     },
@@ -44,7 +44,7 @@
     },
     "lat_pulldowns": {
       "name": "Lat Pulldowns",
-      "equipment": "cable_1_pulley",
+      "equipment": "machine",
       "muscle_group": "back",
       "secondary_muscles": ["biceps"]
     },
@@ -62,13 +62,13 @@
     },
     "cable_bicep_open_curls": {
       "name": "Cable Bicep Open Curls",
-      "equipment": "cable_2_pulley",
+      "equipment": "cable_1_pulley",
       "muscle_group": "biceps",
       "secondary_muscles": []
     },
     "reverse_cable_flyes": {
       "name": "Reverse Cable Flyes",
-      "equipment": "cable_2_pulley",
+      "equipment": "cable_1_pulley",
       "muscle_group": "rear_delts",
       "secondary_muscles": ["upper_back"]
     },
@@ -87,7 +87,7 @@
     "hip_abduction_machine": {
       "name": "Hip Abduction Machine",
       "equipment": "machine",
-      "muscle_group": "glutes",
+      "muscle_group": "glutes, hip_abductors",
       "secondary_muscles": []
     },
     "glute_machine": {
@@ -118,7 +118,7 @@
       "name": "Weighted Back Extensions",
       "equipment": "disk",
       "muscle_group": "lower_back",
-      "secondary_muscles": ["glutes", "hamstrings"]
+      "secondary_muscles": ["glutes", "hamstrings", "lower_back"]
     },
     "abdominal_crunch_machine": {
       "name": "Abdominal Crunch Machine",
@@ -144,9 +144,9 @@
       "muscle_group": "back",
       "secondary_muscles": ["biceps", "rear_delts"]
     },
-    "closed_grip_lat_pulldown": {
-      "name": "Closed Grip Lat Pulldown",
-      "equipment": "cable_1_pulley",
+    "behind_back_lat_pulldown": {
+      "name": "Behind Back Lat Pulldown",
+      "equipment": "machine",
       "muscle_group": "back",
       "secondary_muscles": ["biceps"]
     },
@@ -162,15 +162,15 @@
       "muscle_group": "back",
       "secondary_muscles": ["biceps"]
     },
-    "tricep_rope_pulldowns": {
-      "name": "Tricep Rope Pulldowns",
-      "equipment": "cable_1_pulley",
+    "tricep_V_pulldowns": {
+      "name": "Tricep V Pulldowns",
+      "equipment": "cable_2_pulley",
       "muscle_group": "triceps",
       "secondary_muscles": []
     },
     "cable_face_pulls": {
       "name": "Cable Face Pulls",
-      "equipment": "cable_1_pulley",
+      "equipment": "cable_2_pulley",
       "muscle_group": "rear_delts",
       "secondary_muscles": ["traps", "upper_back"]
     },
