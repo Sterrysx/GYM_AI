@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import csv
+import math
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Any
@@ -743,9 +744,23 @@ def get_all_progressions():
     return {"progressions": results}
 
 
-# ── Muscle Levels (RPG-style) ────────────────────────────────────────────────
+# ── Muscle Levels — True-Level RPG System ─────────────────────────────────────
+#
+# XP Formula (Quality-Adjusted Tonnage):
+#   XP_set = (Weight × Reps) × e^(k × Weight / est_1RM)
+#   k = 1.5 — rewards high-intensity work exponentially
+#
+# Level Cap (exponential):
+#   Total_XP_Required(Lv) = Base × Lv^2.5
+#   Base = 50  ⇒  Lv1 = 50, Lv5 = 2,795, Lv10 = 15,811, Lv20 = 89,442
+#
+# Strength Gates (1RM / Bodyweight ratio):
+#   Lv 20 gate: chest needs 1.0× BW bench, back needs 1.0× BW lat pulldown, ...
+#   Lv 40 gate: 1.5× BW
+#   Lv 60 gate: 2.0× BW
+#
+# 1RM Estimation: Epley formula  1RM = w × (1 + r/30)  using heaviest set
 
-# Exercise → primary and secondary muscle groups (loaded once on startup)
 EXERCISES_JSON = Path(__file__).resolve().parent / "exercises.json"
 _EXERCISE_MUSCLES: dict = {}
 
@@ -759,69 +774,91 @@ def _load_exercise_muscles():
 
 _load_exercise_muscles()
 
-# XP thresholds per level — volume-based (total kg lifted for that muscle)
-# Level 1 = 0 XP, Level 2 = 200, … grows exponentially
-_LEVEL_THRESHOLDS = [0]
-_xp = 0
-for _i in range(1, 100):
-    _xp += int(150 * (1.25 ** _i))
-    _LEVEL_THRESHOLDS.append(_xp)
-
 # Friendly display names
 _MUSCLE_DISPLAY = {
-    "chest": "Chest",
-    "shoulders": "Shoulders",
-    "triceps": "Triceps",
-    "back": "Back",
-    "biceps": "Biceps",
-    "forearms": "Forearms",
-    "rear_delts": "Rear Delts",
-    "traps": "Traps",
-    "glutes": "Glutes",
-    "hamstrings": "Hamstrings",
-    "quads": "Quads",
-    "calves": "Calves",
-    "lower_back": "Lower Back",
-    "abs": "Abs",
-    "upper_back": "Upper Back",
+    "chest": "Chest", "shoulders": "Shoulders", "triceps": "Triceps",
+    "back": "Back", "biceps": "Biceps", "forearms": "Forearms",
+    "rear_delts": "Rear Delts", "traps": "Traps", "glutes": "Glutes",
+    "hamstrings": "Hamstrings", "quads": "Quads", "calves": "Calves",
+    "lower_back": "Lower Back", "abs": "Abs", "upper_back": "Upper Back",
     "hip_abductors": "Hip Abductors",
 }
 
-# Target levels per muscle group (aspirational)
+# Target levels (aspirational ceiling)
 _MUSCLE_TARGETS = {
-    "chest": 8, "shoulders": 7, "triceps": 6, "back": 8, "biceps": 6,
-    "forearms": 4, "rear_delts": 5, "traps": 5, "glutes": 6,
-    "hamstrings": 6, "quads": 7, "calves": 5, "lower_back": 5, "abs": 6,
-    "upper_back": 5, "hip_abductors": 3,
+    "chest": 30, "shoulders": 25, "triceps": 20, "back": 30, "biceps": 20,
+    "forearms": 15, "rear_delts": 15, "traps": 18, "glutes": 22,
+    "hamstrings": 22, "quads": 28, "calves": 18, "lower_back": 18, "abs": 20,
+    "upper_back": 18, "hip_abductors": 10,
 }
 
+# 1RM gate benchmarks per muscle: { gate_level: required_ratio_to_bodyweight }
+# Uses the PRIMARY compound exercise for that muscle
+_STRENGTH_GATES = {
+    "chest":      {20: 1.0, 40: 1.5, 60: 2.0},
+    "back":       {20: 1.0, 40: 1.4, 60: 1.8},
+    "shoulders":  {20: 0.6, 40: 0.9, 60: 1.2},
+    "quads":      {20: 1.2, 40: 1.8, 60: 2.5},
+    "hamstrings": {20: 0.8, 40: 1.2, 60: 1.6},
+    "glutes":     {20: 1.0, 40: 1.5, 60: 2.0},
+    "triceps":    {20: 0.5, 40: 0.75, 60: 1.0},
+    "biceps":     {20: 0.4, 40: 0.6,  60: 0.8},
+}
 
-def _xp_to_level(xp: float) -> tuple[int, float, float]:
-    """Return (level, xp_into_level, xp_needed_for_next)."""
+# --- XP constants ---
+_XP_BASE = 50       # base constant for level curve
+_XP_EXPONENT = 2.5  # polynomial exponent
+_INTENSITY_K = 1.5  # intensity multiplier constant
+
+def _xp_required_for_level(level: int) -> float:
+    """Total cumulative XP to reach a given level."""
+    if level <= 0:
+        return 0
+    return _XP_BASE * (level ** _XP_EXPONENT)
+
+def _level_from_xp(xp: float) -> tuple[int, float, float]:
+    """Return (level, xp_into_current_level, xp_needed_to_advance)."""
     level = 0
-    for i, threshold in enumerate(_LEVEL_THRESHOLDS):
-        if xp >= threshold:
-            level = i
-        else:
+    while _xp_required_for_level(level + 1) <= xp:
+        level += 1
+        if level > 99:
             break
-    if level + 1 < len(_LEVEL_THRESHOLDS):
-        floor_xp = _LEVEL_THRESHOLDS[level]
-        ceil_xp = _LEVEL_THRESHOLDS[level + 1]
-        return level, xp - floor_xp, ceil_xp - floor_xp
-    return level, 0, 1
+    floor_xp = _xp_required_for_level(level)
+    ceil_xp = _xp_required_for_level(level + 1)
+    return level, xp - floor_xp, ceil_xp - floor_xp
+
+def _estimate_1rm(weight: float, reps: int) -> float:
+    """Epley formula: 1RM = w × (1 + r/30). Returns 0 if invalid."""
+    if weight <= 0 or reps <= 0:
+        return 0.0
+    if reps == 1:
+        return weight
+    return round(weight * (1 + reps / 30), 1)
+
+def _get_bodyweight() -> float:
+    """Fetch latest bodyweight from body composition CSV."""
+    try:
+        if BODY_COMP_CSV.exists():
+            df = pd.read_csv(BODY_COMP_CSV)
+            if len(df) > 0 and "Weight_kg" in df.columns:
+                return float(df["Weight_kg"].iloc[-1])
+    except Exception:
+        pass
+    return 70.0  # default
 
 
 @app.get("/muscle-levels")
 def get_muscle_levels():
     """
-    Compute RPG-style levels for every muscle group.
-    XP = total volume (weight × reps) across all exercises targeting that muscle.
-    Primary muscles get full XP, secondary muscles get 40%.
+    True-Level RPG system:
+    - Quality-Adjusted Tonnage XP  (intensity-weighted)
+    - Exponential level curve  (Base × Lv^2.5)
+    - 1RM strength gates       (bodyweight-ratio gated)
+    - Per-muscle 1RM estimation (Epley formula)
     """
     conn = _get_db()
     cursor = conn.cursor()
 
-    # Grab all logged sets
     cursor.execute("""
         SELECT exercise_id, exercise_name, actual_weight, actual_reps
         FROM workout_logs
@@ -830,19 +867,51 @@ def get_muscle_levels():
     rows = cursor.fetchall()
     conn.close()
 
-    # Accumulate XP per muscle
+    bodyweight = _get_bodyweight()
+
+    # --- Pass 1: compute per-exercise 1RM estimates ---
+    exercise_max: dict[str, float] = {}  # ex_id → best 1RM
+    for r in rows:
+        ex_id = r["exercise_id"]
+        w = r["actual_weight"] or 0
+        reps = r["actual_reps"] or 0
+        est = _estimate_1rm(w, reps)
+        if est > exercise_max.get(ex_id, 0):
+            exercise_max[ex_id] = est
+
+    # --- Pass 2: compute per-muscle best 1RM (from primary compound) ---
+    muscle_1rm: dict[str, float] = {}
+    for ex_id, est_1rm in exercise_max.items():
+        info = _EXERCISE_MUSCLES.get(ex_id, {})
+        primary = info.get("muscle_group")
+        if primary and est_1rm > muscle_1rm.get(primary, 0):
+            muscle_1rm[primary] = est_1rm
+
+    # --- Pass 3: compute quality-adjusted XP per muscle ---
     muscle_xp: dict[str, float] = {}
-    muscle_exercises: dict[str, dict] = {}  # muscle → {ex_id: {name, volume, sets, reps}}
+    muscle_exercises: dict[str, dict] = {}
 
     for r in rows:
         ex_id = r["exercise_id"]
         weight = r["actual_weight"] or 0
         reps = r["actual_reps"] or 0
-        volume = weight * reps
+        if weight == 0 and reps == 0:
+            continue
 
+        raw_volume = weight * reps
         ex_info = _EXERCISE_MUSCLES.get(ex_id, {})
         primary = ex_info.get("muscle_group")
         secondaries = ex_info.get("secondary_muscles", [])
+
+        # Intensity multiplier:  e^(k × weight / 1RM)
+        best_1rm = exercise_max.get(ex_id, 0)
+        if best_1rm > 0 and weight > 0:
+            intensity_ratio = min(weight / best_1rm, 1.0)
+            multiplier = math.exp(_INTENSITY_K * intensity_ratio)
+        else:
+            multiplier = 1.0  # bodyweight / unknown exercises
+
+        xp_adjusted = raw_volume * multiplier
 
         targets = []
         if primary:
@@ -851,7 +920,7 @@ def get_muscle_levels():
             targets.append((sec, 0.4))
 
         for muscle, factor in targets:
-            xp_gain = volume * factor
+            xp_gain = xp_adjusted * factor
             muscle_xp[muscle] = muscle_xp.get(muscle, 0) + xp_gain
 
             if muscle not in muscle_exercises:
@@ -864,35 +933,67 @@ def get_muscle_levels():
                     "volume": 0, "sets": 0, "reps": 0,
                 }
             entry = muscle_exercises[muscle][ex_id]
-            entry["volume"] += volume * factor
+            entry["volume"] += xp_gain
             entry["sets"] += 1
             entry["reps"] += reps
 
-    # Build response
+    # --- Pass 4: apply strength gates + compute levels ---
     all_muscles = set(list(muscle_xp.keys()) + list(_MUSCLE_DISPLAY.keys()))
     levels = []
+
     for muscle in sorted(all_muscles):
         xp = muscle_xp.get(muscle, 0)
-        level, xp_in, xp_need = _xp_to_level(xp)
-        target_lvl = _MUSCLE_TARGETS.get(muscle, 5)
+        raw_level, xp_in, xp_need = _level_from_xp(xp)
+
+        # Check strength gates
+        gates = _STRENGTH_GATES.get(muscle, {})
+        est_1rm = round(muscle_1rm.get(muscle, 0), 1)
+        bw_ratio = est_1rm / bodyweight if bodyweight > 0 else 0
+
+        gate_blocked = False
+        gate_message = ""
+        effective_level = raw_level
+
+        for gate_lvl in sorted(gates.keys()):
+            required_ratio = gates[gate_lvl]
+            required_kg = round(required_ratio * bodyweight, 1)
+            if raw_level >= gate_lvl and bw_ratio < required_ratio:
+                effective_level = gate_lvl - 1
+                gate_blocked = True
+                gate_message = (
+                    f"1RM must reach {required_kg}kg ({required_ratio}× BW) "
+                    f"to unlock Lv.{gate_lvl}. Current: {est_1rm}kg ({bw_ratio:.2f}× BW)."
+                )
+                # Recalculate XP bar relative to the capped level
+                floor_xp = _xp_required_for_level(effective_level)
+                ceil_xp = _xp_required_for_level(effective_level + 1)
+                xp_in = xp - floor_xp
+                xp_need = ceil_xp - floor_xp
+                break
+
+        target_lvl = _MUSCLE_TARGETS.get(muscle, 15)
 
         exercises_list = sorted(
             muscle_exercises.get(muscle, {}).values(),
-            key=lambda e: e["volume"], reverse=True
+            key=lambda e: e["volume"], reverse=True,
         )
-        # Round volumes
         for e in exercises_list:
             e["volume"] = round(e["volume"], 1)
 
         levels.append({
             "muscle": muscle,
             "display_name": _MUSCLE_DISPLAY.get(muscle, muscle.replace("_", " ").title()),
-            "level": level,
+            "level": effective_level,
+            "raw_level": raw_level,
             "target_level": target_lvl,
             "xp": round(xp, 1),
-            "xp_in_level": round(xp_in, 1),
+            "xp_in_level": round(max(xp_in, 0), 1),
             "xp_for_next": round(xp_need, 1),
-            "xp_pct": round(xp_in / xp_need * 100, 1) if xp_need > 0 else 100,
+            "xp_pct": round(max(xp_in, 0) / xp_need * 100, 1) if xp_need > 0 else 100,
+            "estimated_1rm": est_1rm if est_1rm > 0 else None,
+            "bodyweight": round(bodyweight, 1),
+            "gate_blocked": gate_blocked,
+            "gate_message": gate_message,
             "exercises": exercises_list,
         })
 
@@ -1150,6 +1251,26 @@ def _gather_user_context() -> str:
         pass
 
     conn.close()
+
+    # ── Muscle RPG levels + strength gates ──
+    try:
+        ml_data = get_muscle_levels()
+        gated = []
+        top5 = sorted(ml_data["muscle_levels"], key=lambda m: m["level"], reverse=True)[:5]
+        for m in top5:
+            line = f"  {m['display_name']}: Lv.{m['level']} ({m['xp']:.0f} XP)"
+            if m.get("estimated_1rm"):
+                line += f" | Est 1RM: {m['estimated_1rm']}kg"
+            parts.append(line)
+        for m in ml_data["muscle_levels"]:
+            if m.get("gate_blocked"):
+                gated.append(f"  ⚠ {m['display_name']} GATE-BLOCKED at Lv.{m['level']}: {m['gate_message']}")
+        if gated:
+            parts.append("Strength gates (must be cleared to level up):")
+            parts.extend(gated)
+    except Exception:
+        pass
+
     return "\n".join(parts)
 
 
