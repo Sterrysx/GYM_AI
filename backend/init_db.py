@@ -17,7 +17,6 @@ import json
 from pathlib import Path
 
 DB_NAME = "gym.db"
-EXERCISES_JSON = Path(__file__).resolve().parent / "exercises.json"
 
 
 def init_db():
@@ -128,21 +127,16 @@ def init_db():
     print("✓ Tables initialised.")
 
     # ──────────────────────────────────────────────────────────
-    # SEED: Load Week 1 from exercises.json
+    # SEED: Load Week 1 from generate_baseline.py
     # ──────────────────────────────────────────────────────────
     cursor.execute("SELECT count(*) FROM workout_plan")
     plan_count = cursor.fetchone()[0]
 
     if plan_count == 0:
-        print("Seeding Week 1 from exercises.json …")
+        print("Seeding Week 1 from generate_baseline …")
 
-        if not EXERCISES_JSON.exists():
-            print(f"ERROR: {EXERCISES_JSON} not found!")
-            conn.close()
-            return
-
-        with open(EXERCISES_JSON) as f:
-            data = json.load(f)
+        from generate_baseline import build_week1_data
+        data = build_week1_data()
 
         seed_week(cursor, 1, data)
 

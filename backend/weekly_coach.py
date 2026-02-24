@@ -14,11 +14,17 @@ from pathlib import Path
 import requests
 import pandas as pd
 
+from generate_baseline import (
+    load_exercises_catalog,
+    SCHEDULE,
+    EQUIPMENT_INCREMENTS,
+    snap_weight,
+    get_equipment_rounding,
+)
+
 DB_NAME = "gym.db"
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "qwen2.5:32b"
-
-EXERCISES_JSON = Path(__file__).resolve().parent / "exercises.json"
 
 
 def export_week_data(cursor, week_id):
@@ -83,19 +89,18 @@ def run_weekly_update():
     with open(f"data/week_{current_week}.json", "r") as f:
         week_context = f.read()
 
-    # Load exercises.json for the AI to understand the structure
-    with open(EXERCISES_JSON, "r") as f:
-        exercises_data = json.load(f)
+    # Load exercise catalog and schedule from generate_baseline
+    exercises_catalog = load_exercises_catalog()
 
-    # Build linked exercises context
+    # Build linked exercises context from SCHEDULE
     linked_info = []
-    for day_str, day_info in exercises_data["schedule"].items():
+    for day_id, day_info in SCHEDULE.items():
         for entry in day_info["exercises"]:
             if entry.get("linked_to"):
-                ex_name = exercises_data["exercises"][entry["exercise_id"]]["name"]
-                linked_ex_name = exercises_data["exercises"][entry["linked_to"]["exercise_id"]]["name"]
+                ex_name = exercises_catalog.get(entry["exercise_id"], {}).get("name", entry["exercise_id"])
+                linked_ex_name = exercises_catalog.get(entry["linked_to"]["exercise_id"], {}).get("name", entry["linked_to"]["exercise_id"])
                 linked_info.append(
-                    f"  Day {day_str}: {ex_name} ↔ Day {entry['linked_to']['day']}: {linked_ex_name}"
+                    f"  Day {day_id}: {ex_name} ↔ Day {entry['linked_to']['day']}: {linked_ex_name}"
                 )
 
     linked_context = "\n".join(linked_info) if linked_info else "None"
@@ -153,30 +158,33 @@ def run_weekly_update():
         conn.close()
         return
 
-    exercises_catalog = exercises_data["exercises"]
-
     # Insert into workout_plan and pre-populate workout_logs
     for day_str, exercises_list in new_plan.items():
         day_id = int(day_str)
+        schedule_day = SCHEDULE.get(day_id, {})
+        day_name = schedule_day.get("day_name", "")
+
         for order, ex in enumerate(exercises_list, start=1):
             ex_id = ex.get("exercise_id", "")
             ex_name = ex.get("Exercise", exercises_catalog.get(ex_id, {}).get("name", ex_id))
             equipment = exercises_catalog.get(ex_id, {}).get("equipment", "unknown")
+            rounding = get_equipment_rounding(equipment)
             target_weights = ex.get("Weight Input")
             if not isinstance(target_weights, list):
                 target_weights = [target_weights] * ex.get("Sets", 3)
+            # Snap weights to valid equipment increments
+            target_weights = [snap_weight(w, equipment) for w in target_weights]
             sets = ex.get("Sets", len(target_weights))
-            target_reps = str(ex.get("Target Reps", "12"))
+            target_reps = str(ex.get("Target Reps", 12))
             strategy = ex.get("Strategy", "linear")
-            rounding = ex.get("Rounding", 2.5)
             superset_group = ex.get("Superset Group")
 
-            # Find linked info from exercises.json
+            # Find linked info from SCHEDULE
             linked_day = None
             linked_ex_id = None
-            for sday, sinfo in exercises_data["schedule"].items():
+            for sday_id, sinfo in SCHEDULE.items():
                 for sentry in sinfo["exercises"]:
-                    if sentry["exercise_id"] == ex_id and int(sday) == day_id:
+                    if sentry["exercise_id"] == ex_id and sday_id == day_id:
                         linked = sentry.get("linked_to")
                         if linked:
                             linked_day = linked["day"]
@@ -190,8 +198,7 @@ def run_weekly_update():
                     superset_group, equipment, linked_day, linked_exercise_id
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                next_week, day_id,
-                exercises_data["schedule"].get(day_str, {}).get("day_name", ""),
+                next_week, day_id, day_name,
                 order, ex_id, ex_name,
                 sets, target_reps, json.dumps(target_weights),
                 strategy, rounding, superset_group, equipment,

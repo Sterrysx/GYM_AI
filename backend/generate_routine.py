@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-generate_routine.py — Reads exercises.json, builds the initial workout plan
-and seeds the database. This replaces the old hardcoded daily_workouts approach.
+generate_routine.py — Builds the initial workout plan from generate_baseline.py
+and seeds the database.
 
 Usage:
-    python generate_routine.py         # Seeds DB from exercises.json
+    python generate_routine.py         # Seeds DB from baseline
     python generate_routine.py --xlsx   # Also exports to Excel for reference
 """
 
@@ -12,18 +12,12 @@ import json
 import sys
 from pathlib import Path
 
-EXERCISES_JSON = Path(__file__).resolve().parent / "exercises.json"
-
-
-def load_exercises():
-    """Load and return the exercises.json data."""
-    with open(EXERCISES_JSON) as f:
-        return json.load(f)
+from generate_baseline import build_week1_data
 
 
 def build_flat_plan(data, week_id=1):
     """
-    Convert the nested exercises.json into a flat list of rows
+    Convert the enriched baseline data into a flat list of rows
     suitable for inserting into workout_plan / exporting to Excel.
     """
     exercises_catalog = data["exercises"]
@@ -82,7 +76,7 @@ def export_xlsx(rows, filename="gym_routine_master.xlsx"):
 
 
 def main():
-    data = load_exercises()
+    data = build_week1_data()
     rows = build_flat_plan(data)
 
     print(f"✓ Built plan: {len(rows)} exercise slots across 5 days")

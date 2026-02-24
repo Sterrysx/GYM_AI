@@ -132,3 +132,19 @@ export async function fetchPlan(weekId = null) {
   const { data } = await api.get('/plan', { params });
   return data;
 }
+
+/**
+ * Fetch strength progression history for a single exercise.
+ */
+export async function fetchProgression(exerciseId) {
+  const { data } = await api.get(`/progression/${exerciseId}`);
+  return data;
+}
+
+/**
+ * Fetch compact progression summary for ALL exercises.
+ */
+export async function fetchAllProgressions() {
+  const { data } = await api.get('/progression');
+  return data;
+}

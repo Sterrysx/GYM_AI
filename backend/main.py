@@ -545,6 +545,151 @@ def generate_next_week():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── Strength Progression ─────────────────────────────────────────────────────
+
+@app.get("/progression/{exercise_id}")
+def get_progression(exercise_id: str):
+    """
+    Returns the strength progression history for an exercise across all weeks.
+    Each entry = one week/day occurrence with per-set data.
+    Also computes summary stats: total reps, total weight, avg weight per rep.
+    """
+    conn = _get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT week_id, day, set_number, target_weight, target_reps,
+               actual_weight, actual_reps, rpe, logged_at
+        FROM workout_logs
+        WHERE exercise_id = ? AND actual_reps IS NOT NULL
+        ORDER BY week_id, day, set_number
+    """, (exercise_id,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        return {"exercise_id": exercise_id, "history": [], "summary": None}
+
+    # Group by (week, day)
+    sessions = {}
+    for r in rows:
+        key = (r["week_id"], r["day"])
+        if key not in sessions:
+            sessions[key] = {
+                "week_id": r["week_id"],
+                "day": r["day"],
+                "logged_at": r["logged_at"],
+                "sets": [],
+                "total_reps": 0,
+                "total_volume": 0.0,
+            }
+        s = sessions[key]
+        w = r["actual_weight"] or 0
+        reps = r["actual_reps"] or 0
+        s["sets"].append({
+            "set_number": r["set_number"],
+            "target_weight": r["target_weight"],
+            "target_reps": r["target_reps"],
+            "actual_weight": w,
+            "actual_reps": reps,
+            "rpe": r["rpe"],
+        })
+        s["total_reps"] += reps
+        s["total_volume"] += w * reps
+
+    history = []
+    for key in sorted(sessions.keys()):
+        s = sessions[key]
+        s["avg_weight_per_rep"] = round(s["total_volume"] / s["total_reps"], 2) if s["total_reps"] > 0 else 0
+        s["total_volume"] = round(s["total_volume"], 1)
+        history.append(s)
+
+    # Global summary across all logged sessions
+    all_reps = sum(s["total_reps"] for s in history)
+    all_volume = sum(s["total_volume"] for s in history)
+    max_weight = max(
+        (set_d["actual_weight"] for s in history for set_d in s["sets"]),
+        default=0
+    )
+
+    summary = {
+        "total_sessions": len(history),
+        "total_reps": all_reps,
+        "total_volume_kg": round(all_volume, 1),
+        "avg_weight_per_rep": round(all_volume / all_reps, 2) if all_reps > 0 else 0,
+        "max_weight": max_weight,
+    }
+
+    return {"exercise_id": exercise_id, "history": history, "summary": summary}
+
+
+@app.get("/progression")
+def get_all_progressions():
+    """
+    Returns a compact summary of progression for ALL exercises
+    (latest session vs first session).
+    """
+    conn = _get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DISTINCT exercise_id, exercise_name
+        FROM workout_logs
+        WHERE actual_reps IS NOT NULL AND strategy != 'static'
+    """)
+    exercises = cursor.fetchall()
+
+    results = []
+    for ex in exercises:
+        ex_id = ex["exercise_id"]
+        ex_name = ex["exercise_name"]
+
+        # First logged session
+        cursor.execute("""
+            SELECT week_id, day, actual_weight, actual_reps
+            FROM workout_logs
+            WHERE exercise_id = ? AND actual_reps IS NOT NULL
+            ORDER BY week_id, day, set_number
+            LIMIT 1
+        """, (ex_id,))
+        first = cursor.fetchone()
+
+        # Latest logged session
+        cursor.execute("""
+            SELECT week_id, day, actual_weight, actual_reps
+            FROM workout_logs
+            WHERE exercise_id = ? AND actual_reps IS NOT NULL
+            ORDER BY week_id DESC, day DESC, set_number DESC
+            LIMIT 1
+        """, (ex_id,))
+        latest = cursor.fetchone()
+
+        # Averages across all logged sets
+        cursor.execute("""
+            SELECT COUNT(*) as total_sets,
+                   SUM(actual_reps) as total_reps,
+                   SUM(actual_weight * actual_reps) as total_volume,
+                   AVG(actual_weight) as avg_weight
+            FROM workout_logs
+            WHERE exercise_id = ? AND actual_reps IS NOT NULL
+        """, (ex_id,))
+        agg = cursor.fetchone()
+
+        results.append({
+            "exercise_id": ex_id,
+            "exercise_name": ex_name,
+            "first_weight": first["actual_weight"] if first else None,
+            "latest_weight": latest["actual_weight"] if latest else None,
+            "total_sets": agg["total_sets"],
+            "total_reps": agg["total_reps"],
+            "total_volume_kg": round(agg["total_volume"], 1) if agg["total_volume"] else 0,
+            "avg_weight": round(agg["avg_weight"], 1) if agg["avg_weight"] else 0,
+        })
+
+    conn.close()
+    return {"progressions": results}
+
+
 # ── Dashboard ────────────────────────────────────────────────────────────────
 
 @app.get("/dashboard/volume")

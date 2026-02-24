@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList } from 'lucide-react';
+import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList, TrendingUp } from 'lucide-react';
 import DaySelector from './DaySelector';
 import { generateNextWeek } from '../api/client';
 
@@ -60,10 +60,11 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
         {/* Tab navigation */}
         <div className="flex gap-1 mb-2.5">
           {[
-            { key: 'stats',     icon: BarChart2,      label: 'Overview' },
-            { key: 'metrics',   icon: Scale,           label: 'Body' },
-            { key: 'plan',      icon: ClipboardList,   label: 'Plan' },
-            { key: 'workout',   icon: Dumbbell,        label: 'Workout' },
+            { key: 'stats',       icon: BarChart2,      label: 'Overview' },
+            { key: 'metrics',     icon: Scale,           label: 'Body' },
+            { key: 'progression', icon: TrendingUp,      label: 'Strength' },
+            { key: 'plan',        icon: ClipboardList,   label: 'Plan' },
+            { key: 'workout',     icon: Dumbbell,        label: 'Workout' },
           ].map(({ key, icon: Icon, label }) => (
             <button
               key={key}
