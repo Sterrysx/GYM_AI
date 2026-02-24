@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """
 fetch_renpho.py — A "Full Refresh" pipeline.
-Fetches all historical data from Renpho, filters for the new baseline 
-(Feb 16, 2026 onwards), extracts all advanced metrics, and overwrites the CSV.
+Fetches all historical data from Renpho, filters for the new baseline
+(Feb 16, 2026 onwards), extracts all advanced metrics, writes to both
+the CSV data lake AND the renpho_body_comp SQLite table.
 """
 
 import os
+import sqlite3
 from datetime import date
 from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
-from renpho import RenphoClient 
+from renpho import RenphoClient
 
 # ── Resolve paths ────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ENV_PATH = PROJECT_ROOT / "backend" / ".env"
 METRICS_DIR = PROJECT_ROOT / "data" / "metrics"
 CSV_PATH = METRICS_DIR / "body_composition.csv"
+DB_PATH = Path(__file__).resolve().parent / "gym.db"
 
 # Load credentials from .env
 load_dotenv(ENV_PATH)
@@ -26,6 +29,36 @@ PASSWORD = os.getenv("RENPHO_PASSWORD")
 
 # ── The Baseline ─────────────────────────────────────────────────────────────
 CUTOFF_DATE = "2026-02-16"
+
+
+def _write_to_db(df: pd.DataFrame):
+    """Write body composition data to the renpho_body_comp table (upsert)."""
+    conn = sqlite3.connect(str(DB_PATH))
+    for _, row in df.iterrows():
+        conn.execute("""
+            INSERT OR REPLACE INTO renpho_body_comp (
+                date, weight_kg, bmi, bodyfat_pct, water_pct,
+                muscle_mass_kg, bone_mass_kg, bmr_kcal, visceral_fat,
+                subcutaneous_fat_pct, protein_pct, metabolic_age, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        """, (
+            row["Date"],
+            row.get("Weight_kg", 0),
+            row.get("BMI", 0),
+            row.get("BodyFat_pct", 0),
+            row.get("Water_pct", 0),
+            row.get("MuscleMass_kg", 0),
+            row.get("BoneMass_kg", 0),
+            row.get("BMR_kcal", 0),
+            row.get("VisceralFat", 0),
+            row.get("SubcutaneousFat_pct", 0),
+            row.get("Protein_pct", 0),
+            row.get("MetabolicAge", 0),
+        ))
+    conn.commit()
+    conn.close()
+    print(f"✓ Wrote {len(df)} records to DB (renpho_body_comp).")
+
 
 def fetch_from_cloud():
     if not EMAIL or not PASSWORD:
@@ -93,6 +126,9 @@ def fetch_from_cloud():
 
         METRICS_DIR.mkdir(parents=True, exist_ok=True)
         df.to_csv(CSV_PATH, index=False)
+
+        # ── Write to SQLite DB ───────────────────────────────────────────
+        _write_to_db(df)
 
         print(f"✓ Success! Data Lake Refreshed.")
         print(f"✓ Saved {len(df)} daily records starting from {CUTOFF_DATE}.")

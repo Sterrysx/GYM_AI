@@ -1,11 +1,9 @@
 /**
  * Renders the list of exercises for the selected day.
- * - periodized_bench  → BenchCard
- * - static            → grouped into AbsAccordion
- * - superset_group    → grouped via SupersetCard
+ * - periodized_bench  → BenchCard (no reps input, auto-log)
+ * - static            → grouped into a single AbsAccordion
+ * - superset_group    → grouped & interleaved via SupersetCard
  * - everything else   → ExerciseCard
- *
- * All cards now receive per-set logged data from the backend.
  */
 import ExerciseCard from './ExerciseCard';
 import BenchCard from './BenchCard';
@@ -13,7 +11,7 @@ import AbsAccordion from './AbsAccordion';
 import SupersetCard from './SupersetCard';
 import { Loader2 } from 'lucide-react';
 
-export default function WorkoutFeed({ exercises, week, day, loading, error, onError, showToast }) {
+export default function WorkoutFeed({ exercises, week, day, loading, error, onLog, onError, showToast }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-zinc-500 text-sm">
@@ -46,13 +44,14 @@ export default function WorkoutFeed({ exercises, week, day, loading, error, onEr
   }
 
   const staticExercises = exercises.filter((ex) => ex.strategy === 'static');
-  const mainExercises = exercises.filter((ex) => ex.strategy !== 'static');
+  const mainExercises   = exercises.filter((ex) => ex.strategy !== 'static');
 
+  // ── Group superset exercises together, preserve order ──
   const rendered = [];
   const supersetSeen = new Set();
 
   mainExercises.forEach((ex, idx) => {
-    // Bench press
+    // Bench press — always standalone
     if (ex.strategy === 'periodized_bench') {
       rendered.push(
         <BenchCard
@@ -67,7 +66,7 @@ export default function WorkoutFeed({ exercises, week, day, loading, error, onEr
       return;
     }
 
-    // Superset group
+    // Superset group — render all exercises in the group at once
     const sg = ex.superset_group;
     if (sg && sg !== 'Abs' && !supersetSeen.has(sg)) {
       supersetSeen.add(sg);
@@ -79,33 +78,38 @@ export default function WorkoutFeed({ exercises, week, day, loading, error, onEr
             exercises={groupExercises}
             week={week}
             day={day}
-            onError={(msg) => showToast(msg, true)}
-            showToast={showToast}
+            onLog={onLog}
+            onError={onError}
           />,
         );
         return;
       }
+      // Single exercise with a superset_group — just render normally
     }
 
+    // Already rendered as part of a superset group
     if (sg && sg !== 'Abs' && supersetSeen.has(sg)) return;
 
     // Normal exercise
     rendered.push(
       <ExerciseCard
-        key={`${ex.exercise_id ?? ex.exercise}-${idx}`}
+        key={`${ex.exercise}-${idx}`}
         exercise={ex}
         week={week}
         day={day}
-        onError={(msg) => showToast(msg, true)}
-        showToast={showToast}
+        onLog={onLog}
+        onError={onError}
       />,
     );
   });
 
   return (
-    <div className="pt-3 pb-24 space-y-0">
+    <div className="pb-6">
       {rendered}
-      {staticExercises.length > 0 && <AbsAccordion exercises={staticExercises} />}
+
+      {staticExercises.length > 0 && (
+        <AbsAccordion exercises={staticExercises} />
+      )}
     </div>
   );
 }

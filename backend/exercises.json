@@ -1,0 +1,718 @@
+{
+  "exercises": {
+    "barbell_bench_press": {
+      "name": "Barbell Bench Press",
+      "equipment": "barbell",
+      "muscle_group": "chest",
+      "secondary_muscles": ["triceps", "shoulders"]
+    },
+    "low_cable_flyes": {
+      "name": "Low Cable Flyes",
+      "equipment": "cable_2_pulley",
+      "muscle_group": "chest",
+      "secondary_muscles": []
+    },
+    "frontal_plate_raises": {
+      "name": "Frontal Plate Raises",
+      "equipment": "disk",
+      "muscle_group": "shoulders",
+      "secondary_muscles": []
+    },
+    "overhead_cable_tricep_ext": {
+      "name": "Overhead Tricep Extension (Cable)",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "triceps",
+      "secondary_muscles": []
+    },
+    "lateral_dumbbell_raises": {
+      "name": "Lateral Dumbbell Raises",
+      "equipment": "dumbbells",
+      "muscle_group": "shoulders",
+      "secondary_muscles": []
+    },
+    "tricep_pushdowns": {
+      "name": "Tricep Pushdowns",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "triceps",
+      "secondary_muscles": []
+    },
+    "lateral_cable_raises": {
+      "name": "Lateral Cable Raises",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "shoulders",
+      "secondary_muscles": []
+    },
+    "lat_pulldowns": {
+      "name": "Lat Pulldowns",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "back",
+      "secondary_muscles": ["biceps"]
+    },
+    "machine_closed_row": {
+      "name": "Machine Closed Row",
+      "equipment": "machine",
+      "muscle_group": "back",
+      "secondary_muscles": ["biceps"]
+    },
+    "standing_finger_plate_curls": {
+      "name": "Standing Finger Plate Curls",
+      "equipment": "disk",
+      "muscle_group": "forearms",
+      "secondary_muscles": ["biceps"]
+    },
+    "cable_bicep_open_curls": {
+      "name": "Cable Bicep Open Curls",
+      "equipment": "cable_2_pulley",
+      "muscle_group": "biceps",
+      "secondary_muscles": []
+    },
+    "reverse_cable_flyes": {
+      "name": "Reverse Cable Flyes",
+      "equipment": "cable_2_pulley",
+      "muscle_group": "rear_delts",
+      "secondary_muscles": ["upper_back"]
+    },
+    "dumbbell_hammer_curls": {
+      "name": "Dumbbell Hammer Curls",
+      "equipment": "dumbbells",
+      "muscle_group": "biceps",
+      "secondary_muscles": ["forearms"]
+    },
+    "trapezoid_raises": {
+      "name": "Trapezoid Raises",
+      "equipment": "dumbbells",
+      "muscle_group": "traps",
+      "secondary_muscles": []
+    },
+    "hip_abduction_machine": {
+      "name": "Hip Abduction Machine",
+      "equipment": "machine",
+      "muscle_group": "glutes",
+      "secondary_muscles": []
+    },
+    "glute_machine": {
+      "name": "Glute Machine",
+      "equipment": "machine",
+      "muscle_group": "glutes",
+      "secondary_muscles": ["hamstrings"]
+    },
+    "lying_leg_curls": {
+      "name": "Lying Leg Curls",
+      "equipment": "machine",
+      "muscle_group": "hamstrings",
+      "secondary_muscles": []
+    },
+    "leg_extensions": {
+      "name": "Leg Extensions",
+      "equipment": "machine",
+      "muscle_group": "quads",
+      "secondary_muscles": []
+    },
+    "machine_calf_extensions": {
+      "name": "Machine Calf Extensions",
+      "equipment": "machine",
+      "muscle_group": "calves",
+      "secondary_muscles": []
+    },
+    "weighted_back_extensions": {
+      "name": "Weighted Back Extensions",
+      "equipment": "disk",
+      "muscle_group": "lower_back",
+      "secondary_muscles": ["glutes", "hamstrings"]
+    },
+    "abdominal_crunch_machine": {
+      "name": "Abdominal Crunch Machine",
+      "equipment": "machine",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "flat_dumbbell_bench_press": {
+      "name": "Flat Dumbbell Bench Press",
+      "equipment": "dumbbells",
+      "muscle_group": "chest",
+      "secondary_muscles": ["triceps", "shoulders"]
+    },
+    "incline_dumbbell_bench_press": {
+      "name": "Incline Dumbbell Bench Press",
+      "equipment": "dumbbells",
+      "muscle_group": "chest",
+      "secondary_muscles": ["triceps", "shoulders"]
+    },
+    "machine_open_row": {
+      "name": "Machine Open Row",
+      "equipment": "machine",
+      "muscle_group": "back",
+      "secondary_muscles": ["biceps", "rear_delts"]
+    },
+    "closed_grip_lat_pulldown": {
+      "name": "Closed Grip Lat Pulldown",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "back",
+      "secondary_muscles": ["biceps"]
+    },
+    "push_ups": {
+      "name": "Push Ups",
+      "equipment": "bodyweight",
+      "muscle_group": "chest",
+      "secondary_muscles": ["triceps", "shoulders"]
+    },
+    "pull_ups": {
+      "name": "Pull Ups",
+      "equipment": "bodyweight",
+      "muscle_group": "back",
+      "secondary_muscles": ["biceps"]
+    },
+    "tricep_rope_pulldowns": {
+      "name": "Tricep Rope Pulldowns",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "triceps",
+      "secondary_muscles": []
+    },
+    "cable_face_pulls": {
+      "name": "Cable Face Pulls",
+      "equipment": "cable_1_pulley",
+      "muscle_group": "rear_delts",
+      "secondary_muscles": ["traps", "upper_back"]
+    },
+    "abs_figure_8s": {
+      "name": "Abs: Figure 8's",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_hands_back_raises": {
+      "name": "Abs: Hands Back Raises",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_lower_abs_up_down": {
+      "name": "Abs: Lower abs up/down",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_seated_8s_left": {
+      "name": "Abs: Seated 8's Left",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_seated_8s_right": {
+      "name": "Abs: Seated 8's Right",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_scissor_v_ups": {
+      "name": "Abs: Scissor V Ups",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    },
+    "abs_21_crunch": {
+      "name": "Abs: 21 Crunch",
+      "equipment": "bodyweight",
+      "muscle_group": "abs",
+      "secondary_muscles": []
+    }
+  },
+
+  "schedule": {
+    "1": {
+      "day_name": "Push",
+      "exercises": [
+        {
+          "exercise_id": "barbell_bench_press",
+          "sets": 5,
+          "target_reps": "5",
+          "baseline_weights": [67.5, 67.5, 67.5, 67.5, 67.5],
+          "strategy": "periodized_bench",
+          "rounding": 2.5,
+          "superset_group": null,
+          "focus": "strength"
+        },
+        {
+          "exercise_id": "low_cable_flyes",
+          "sets": 3,
+          "target_reps": "6-10",
+          "baseline_weights": [7.5, 7.5, 5],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "frontal_plate_raises",
+          "sets": 3,
+          "target_reps": "6-10",
+          "baseline_weights": [10, 5, 5],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "overhead_cable_tricep_ext",
+          "sets": 4,
+          "target_reps": "6-10",
+          "baseline_weights": [65, 60, 55, 50],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "B",
+          "linked_to": {"day": 5, "exercise_id": "overhead_cable_tricep_ext"}
+        },
+        {
+          "exercise_id": "lateral_dumbbell_raises",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [8, 7, 6, 6],
+          "strategy": "linear",
+          "rounding": 1,
+          "superset_group": "B",
+          "linked_to": {"day": 5, "exercise_id": "lateral_dumbbell_raises"}
+        },
+        {
+          "exercise_id": "tricep_pushdowns",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [85, 80, 75, 70],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "C",
+          "linked_to": {"day": 5, "exercise_id": "tricep_rope_pulldowns"}
+        },
+        {
+          "exercise_id": "lateral_cable_raises",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [3.75, 3.75, 2.5, 2.5],
+          "strategy": "linear",
+          "rounding": 1.25,
+          "superset_group": "C",
+          "linked_to": {"day": 5, "exercise_id": "lateral_cable_raises"}
+        },
+        {
+          "exercise_id": "abs_figure_8s",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_hands_back_raises",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_lower_abs_up_down",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_left",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_right",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_scissor_v_ups",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_21_crunch",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        }
+      ]
+    },
+    "2": {
+      "day_name": "Pull",
+      "exercises": [
+        {
+          "exercise_id": "lat_pulldowns",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [70, 60, 50],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": null
+        },
+        {
+          "exercise_id": "machine_closed_row",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [47, 42, 37],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "standing_finger_plate_curls",
+          "sets": 3,
+          "target_reps": "20",
+          "baseline_weights": [5, 5, 5],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "cable_bicep_open_curls",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [20, 17.5, 15],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "B",
+          "linked_to": {"day": 5, "exercise_id": "cable_bicep_open_curls"}
+        },
+        {
+          "exercise_id": "reverse_cable_flyes",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [3.75, 2.5, 2.5],
+          "strategy": "linear",
+          "rounding": 1.25,
+          "superset_group": "B",
+          "linked_to": {"day": 5, "exercise_id": "reverse_cable_flyes"}
+        },
+        {
+          "exercise_id": "dumbbell_hammer_curls",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [18, 18, 16],
+          "strategy": "linear",
+          "rounding": 2,
+          "superset_group": "C",
+          "linked_to": {"day": 5, "exercise_id": "dumbbell_hammer_curls"}
+        },
+        {
+          "exercise_id": "trapezoid_raises",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [24, 22, 20],
+          "strategy": "linear",
+          "rounding": 2,
+          "superset_group": "C"
+        },
+        {
+          "exercise_id": "abs_figure_8s",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_hands_back_raises",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_lower_abs_up_down",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_left",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_right",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_scissor_v_ups",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_21_crunch",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        }
+      ]
+    },
+    "3": {
+      "day_name": "Lower Body",
+      "exercises": [
+        {
+          "exercise_id": "hip_abduction_machine",
+          "sets": 3,
+          "target_reps": "20",
+          "baseline_weights": [105, 95, 85],
+          "strategy": "linear",
+          "rounding": 10,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "glute_machine",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [45, 35, 35],
+          "strategy": "linear",
+          "rounding": 10,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "lying_leg_curls",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [21, 21, 14],
+          "strategy": "linear",
+          "rounding": 7,
+          "superset_group": "B"
+        },
+        {
+          "exercise_id": "leg_extensions",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [40, 35, 30],
+          "strategy": "linear",
+          "rounding": 7,
+          "superset_group": "B"
+        },
+        {
+          "exercise_id": "machine_calf_extensions",
+          "sets": 4,
+          "target_reps": "15",
+          "baseline_weights": [50, 45, 40],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "C"
+        },
+        {
+          "exercise_id": "weighted_back_extensions",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [10, 5, 5],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": "C"
+        },
+        {
+          "exercise_id": "abdominal_crunch_machine",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [50, 45, 40],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": null
+        }
+      ]
+    },
+    "4": {
+      "day_name": "Chest & Back",
+      "exercises": [
+        {
+          "exercise_id": "flat_dumbbell_bench_press",
+          "sets": 3,
+          "target_reps": "10",
+          "baseline_weights": [26, 26, 22],
+          "strategy": "linear",
+          "rounding": 2,
+          "superset_group": null
+        },
+        {
+          "exercise_id": "incline_dumbbell_bench_press",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [22, 20, 20],
+          "strategy": "linear",
+          "rounding": 2,
+          "superset_group": null
+        },
+        {
+          "exercise_id": "machine_open_row",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [47, 42, 37],
+          "strategy": "linear",
+          "rounding": 5,
+          "superset_group": null
+        },
+        {
+          "exercise_id": "closed_grip_lat_pulldown",
+          "sets": 3,
+          "target_reps": "12",
+          "baseline_weights": [50, 45, 40],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": null
+        },
+        {
+          "exercise_id": "push_ups",
+          "sets": 3,
+          "target_reps": "Failure",
+          "baseline_weights": [0, 0, 0],
+          "strategy": "linear",
+          "rounding": 0,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "pull_ups",
+          "sets": 3,
+          "target_reps": "Failure",
+          "baseline_weights": [0, 0, 0],
+          "strategy": "linear",
+          "rounding": 0,
+          "superset_group": "A"
+        },
+        {
+          "exercise_id": "abs_figure_8s",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_hands_back_raises",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_lower_abs_up_down",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_left",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_right",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_scissor_v_ups",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_21_crunch",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        }
+      ]
+    },
+    "5": {
+      "day_name": "Arms",
+      "exercises": [
+        {
+          "exercise_id": "overhead_cable_tricep_ext",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [65, 60, 55, 50],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "A",
+          "linked_to": {"day": 1, "exercise_id": "overhead_cable_tricep_ext"}
+        },
+        {
+          "exercise_id": "cable_bicep_open_curls",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [20, 20, 17.5, 15],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "A",
+          "linked_to": {"day": 2, "exercise_id": "cable_bicep_open_curls"}
+        },
+        {
+          "exercise_id": "tricep_rope_pulldowns",
+          "sets": 4,
+          "target_reps": "15",
+          "baseline_weights": [85, 75, 70, 65],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "B",
+          "linked_to": {"day": 1, "exercise_id": "tricep_pushdowns"}
+        },
+        {
+          "exercise_id": "dumbbell_hammer_curls",
+          "sets": 4,
+          "target_reps": "12",
+          "baseline_weights": [18, 18, 16, 16],
+          "strategy": "linear",
+          "rounding": 2,
+          "superset_group": "B",
+          "linked_to": {"day": 2, "exercise_id": "dumbbell_hammer_curls"}
+        },
+        {
+          "exercise_id": "lateral_dumbbell_raises",
+          "sets": 3,
+          "target_reps": "20",
+          "baseline_weights": [8, 7, 6],
+          "strategy": "linear",
+          "rounding": 1,
+          "superset_group": "C",
+          "linked_to": {"day": 1, "exercise_id": "lateral_dumbbell_raises"}
+        },
+        {
+          "exercise_id": "cable_face_pulls",
+          "sets": 3,
+          "target_reps": "20",
+          "baseline_weights": [55, 50, 45],
+          "strategy": "linear",
+          "rounding": 2.5,
+          "superset_group": "C"
+        },
+        {
+          "exercise_id": "lateral_cable_raises",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [3.75, 2.5, 2.5],
+          "strategy": "linear",
+          "rounding": 1.25,
+          "superset_group": "D",
+          "linked_to": {"day": 1, "exercise_id": "lateral_cable_raises"}
+        },
+        {
+          "exercise_id": "reverse_cable_flyes",
+          "sets": 3,
+          "target_reps": "15",
+          "baseline_weights": [3.75, 2.5, 2.5],
+          "strategy": "linear",
+          "rounding": 1.25,
+          "superset_group": "D",
+          "linked_to": {"day": 2, "exercise_id": "reverse_cable_flyes"}
+        },
+        {
+          "exercise_id": "abs_figure_8s",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_hands_back_raises",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_lower_abs_up_down",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_left",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_seated_8s_right",
+          "sets": 1, "target_reps": "60s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_scissor_v_ups",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        },
+        {
+          "exercise_id": "abs_21_crunch",
+          "sets": 1, "target_reps": "30s", "baseline_weights": [0],
+          "strategy": "static", "rounding": 0, "superset_group": "Abs"
+        }
+      ]
+    }
+  }
+}

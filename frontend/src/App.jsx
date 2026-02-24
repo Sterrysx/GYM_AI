@@ -8,29 +8,19 @@ import Toast from './components/Toast';
 import ChatBubble from './components/ChatBubble';
 import { useWorkout } from './hooks/useWorkout';
 import { useToast } from './hooks/useToast';
-import { logExercise } from './api/client';
 
 export default function App() {
-  const [activeView, setActiveView] = useState('stats'); // 'stats' | 'metrics' | 'workout'
+  const [activeView, setActiveView] = useState('stats');
   const { week, day, exercises, loading, error, load } = useWorkout();
   const { toast, showToast } = useToast();
 
-  /** Switch to workout tab and load the day. */
   const handleSelectDay = (dayId) => {
     setActiveView('workout');
     load(dayId);
   };
 
-  /** Called after "Generate Next Week" succeeds — reload the active day. */
   const handleGenerated = () => {
     if (day) load(day);
-  };
-
-  /** Called by ExerciseCard when user hits "Log". */
-  const handleLog = async (payload) => {
-    const result = await logExercise(payload);
-    showToast(`${result.exercise} saved.`);
-    return result;
   };
 
   return (
@@ -54,7 +44,6 @@ export default function App() {
             day={day}
             loading={loading}
             error={error}
-            onLog={handleLog}
             onError={(msg) => showToast(msg, true)}
             showToast={showToast}
           />
