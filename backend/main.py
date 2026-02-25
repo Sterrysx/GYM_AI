@@ -11,6 +11,7 @@ import pandas as pd
 import requests as http_requests
 from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 # Internal logic
@@ -308,21 +309,24 @@ def get_stats():
 
 
 @app.get("/workout/{day_id}")
-def get_workout(day_id: int):
+def get_workout(day_id: int, week_id: Optional[int] = Query(None)):
     """
     Returns the workout for a day INCLUDING already-logged data.
     Each exercise includes a `sets_data` array where each set shows
     target weight/reps AND actual weight/reps if already logged.
+    Accepts optional week_id query param; defaults to latest week.
     """
     conn = _get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT MAX(week_id) FROM workout_plan")
-    current_week = cursor.fetchone()[0]
+    cursor.execute("SELECT DISTINCT week_id FROM workout_plan ORDER BY week_id")
+    all_weeks = [r["week_id"] for r in cursor.fetchall()]
 
-    if not current_week:
+    if not all_weeks:
         conn.close()
         return {"error": "No workout plan found."}
+
+    current_week = week_id if week_id and week_id in all_weeks else all_weeks[-1]
 
     # Get all sets for this day (plan + logs are in workout_logs)
     cursor.execute('''
@@ -376,7 +380,7 @@ def get_workout(day_id: int):
 
     workout_data = sorted(exercises.values(), key=lambda x: x["exercise_order"])
 
-    return {"week": current_week, "day": day_id, "exercises": workout_data}
+    return {"week": current_week, "day": day_id, "exercises": workout_data, "weeks": all_weeks}
 
 
 # ── Per-set logging ──────────────────────────────────────────────────────────
@@ -744,17 +748,57 @@ def get_all_progressions():
     return {"progressions": results}
 
 
+# ── Abs Routine — Incomplete-Time History ─────────────────────────────────────
+
+@app.get("/abs/history")
+def get_abs_history():
+    """
+    Returns per-week incomplete-seconds for the abs routine.
+    The 'rpe' field on the first abs exercise of each (week, day) stores
+    the number of seconds the user couldn't complete in the 6-min routine.
+    """
+    conn = _get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT week_id, day, rpe, logged_at
+        FROM workout_logs
+        WHERE strategy = 'static'
+          AND actual_reps IS NOT NULL
+          AND set_number = 1
+          AND rpe IS NOT NULL
+        ORDER BY week_id, day
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Deduplicate: keep only first abs exercise per (week, day) — rpe = incomplete secs
+    seen = set()
+    history = []
+    for r in rows:
+        key = (r["week_id"], r["day"])
+        if key not in seen:
+            seen.add(key)
+            history.append({
+                "week_id": r["week_id"],
+                "day": r["day"],
+                "incomplete_secs": r["rpe"],
+                "logged_at": r["logged_at"],
+            })
+
+    return {"history": history}
+
+
 # ── Muscle Levels — True-Level RPG System ─────────────────────────────────────
 #
 # XP Formula (Quality-Adjusted Tonnage):
-#   XP_set = (Weight × Reps) × e^(k × Weight / est_1RM)
-#   k = 1.5 — rewards high-intensity work exponentially
+#   Base_XP = (Weight × Reps) × e^(k × Weight / est_1RM)
+#   Muscle_XP += Base_XP × Activation_Ratio  (from ACTIVATION_MULTIPLIERS)
 #
 # Level Cap (exponential):
 #   Total_XP_Required(Lv) = Base × Lv^2.5
 #   Base = 50  ⇒  Lv1 = 50, Lv5 = 2,795, Lv10 = 15,811, Lv20 = 89,442
 #
-# Strength Gates (1RM / Bodyweight ratio):
+# Strength Gates (1RM / Bodyweight ratio on the Anchor exercise):
 #   Lv 20 gate: chest needs 1.0× BW bench, back needs 1.0× BW lat pulldown, ...
 #   Lv 40 gate: 1.5× BW
 #   Lv 60 gate: 2.0× BW
@@ -774,33 +818,125 @@ def _load_exercise_muscles():
 
 _load_exercise_muscles()
 
-# Friendly display names
+# ── Activation Multipliers ────────────────────────────────────────────────────
+# Maps exercise_name → { library_muscle_key: ratio }
+# The library uses: chest, triceps, front-deltoids, side-deltoids, back-deltoids,
+# biceps, forearm, trapezius, upper-back, lower-back, abs, obliques,
+# quadriceps, hamstring, calves, gluteal, abductors, adductor, lats
+ACTIVATION_MULTIPLIERS = {
+    # --- PUSH ---
+    "Barbell Bench Press":            {"chest": 1.0, "triceps": 0.4, "front-deltoids": 0.3},
+    "Flat Dumbbell Bench Press":      {"chest": 1.0, "triceps": 0.3, "front-deltoids": 0.3},
+    "Incline Dumbbell Bench Press":   {"chest": 1.0, "front-deltoids": 0.5, "triceps": 0.3},
+    "Low Cable Flyes":                {"chest": 1.0},
+    "Push Ups":                       {"chest": 1.0, "triceps": 0.4, "front-deltoids": 0.2},
+    "Frontal Plate Raises":           {"front-deltoids": 1.0},
+    "Lateral Dumbbell Raises":        {"side-deltoids": 1.0},
+    "Cable Lateral Raises":           {"side-deltoids": 1.0},
+    "DB Lateral Raises":              {"side-deltoids": 1.0},
+    "Overhead Tricep Extension (DB)": {"triceps": 1.0},
+    "Overhead DB Tricep Ext":         {"triceps": 1.0},
+    "Tricep Pushdowns":               {"triceps": 1.0},
+    "Tricep Rope Pulldowns":          {"triceps": 1.0},
+    # --- PULL ---
+    "Lat Pulldowns":                  {"lats": 1.0, "biceps": 0.4, "upper-back": 0.3},
+    "Closed Grip Lat Pulldown":       {"lats": 1.0, "biceps": 0.5, "upper-back": 0.3},
+    "Pull Ups":                       {"lats": 1.0, "biceps": 0.4, "upper-back": 0.3},
+    "Machine Closed Row":             {"upper-back": 1.0, "lats": 0.5, "biceps": 0.3},
+    "Machine Open Row":               {"upper-back": 1.0, "back-deltoids": 0.4, "biceps": 0.2},
+    "Reverse Cable Flyes":            {"back-deltoids": 1.0, "trapezius": 0.5},
+    "Cable Face Pulls":               {"back-deltoids": 1.0, "trapezius": 0.6},
+    "Trapezoid Raises":               {"trapezius": 1.0},
+    "Standing Finger Plate Curls":    {"biceps": 1.0, "forearm": 0.3},
+    "Cable Bicep Open Curls":         {"biceps": 1.0},
+    "Open DB Curls":                  {"biceps": 1.0},
+    "Dumbbell Hammer Curls":          {"biceps": 1.0, "forearm": 0.8},
+    "DB Hammer Curls":                {"biceps": 1.0, "forearm": 0.8},
+    # --- LEGS & CORE ---
+    "Hip Abduction Machine":          {"gluteal": 1.0},
+    "Glute Machine":                  {"gluteal": 1.0, "hamstring": 0.3},
+    "Lying Leg Curls":                {"hamstring": 1.0},
+    "Leg Extensions":                 {"quadriceps": 1.0},
+    "Machine Calf Extensions":        {"calves": 1.0},
+    "Weighted Back Extensions":       {"lower-back": 1.0, "gluteal": 0.4},
+    "Abdominal Crunch Machine":       {"abs": 1.0},
+    # --- ABS / CORE (static & bodyweight) ---
+    "Abs: 21 Crunch":                 {"abs": 1.0, "obliques": 0.3},
+    "Abs: Figure 8's":                {"abs": 1.0, "obliques": 0.6},
+    "Abs: Hands Back Raises":         {"abs": 1.0, "lower-back": 0.2},
+    "Abs: Lower abs up/down":         {"abs": 1.0},
+    "Abs: Scissor V Ups":             {"abs": 1.0, "obliques": 0.4},
+    "Abs: Seated 8's Left":           {"abs": 0.8, "obliques": 1.0},
+    "Abs: Seated 8's Right":          {"abs": 0.8, "obliques": 1.0},
+}
+
+# Build a quick lookup by exercise_id too (snake_case)
+_ACTIVATION_BY_ID: dict[str, dict[str, float]] = {}
+for _name, _ratios in ACTIVATION_MULTIPLIERS.items():
+    _key = _name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+    _ACTIVATION_BY_ID[_key] = _ratios
+
+# Friendly display names — now using the library's muscle keys
 _MUSCLE_DISPLAY = {
-    "chest": "Chest", "shoulders": "Shoulders", "triceps": "Triceps",
-    "back": "Back", "biceps": "Biceps", "forearms": "Forearms",
-    "rear_delts": "Rear Delts", "traps": "Traps", "glutes": "Glutes",
-    "hamstrings": "Hamstrings", "quads": "Quads", "calves": "Calves",
-    "lower_back": "Lower Back", "abs": "Abs", "upper_back": "Upper Back",
-    "hip_abductors": "Hip Abductors",
+    "chest": "Chest",
+    "front-deltoids": "Front Delts",
+    "side-deltoids": "Side Delts",
+    "back-deltoids": "Rear Delts",
+    "triceps": "Triceps",
+    "biceps": "Biceps",
+    "forearm": "Forearms",
+    "trapezius": "Traps",
+    "upper-back": "Upper Back",
+    "lower-back": "Lower Back",
+    "lats": "Lats",
+    "abs": "Abs",
+    "obliques": "Obliques",
+    "quadriceps": "Quads",
+    "hamstring": "Hamstrings",
+    "calves": "Calves",
+    "gluteal": "Glutes",
+    "abductors": "Hip Abductors",
 }
 
 # Target levels (aspirational ceiling)
 _MUSCLE_TARGETS = {
-    "chest": 30, "shoulders": 25, "triceps": 20, "back": 30, "biceps": 20,
-    "forearms": 15, "rear_delts": 15, "traps": 18, "glutes": 22,
-    "hamstrings": 22, "quads": 28, "calves": 18, "lower_back": 18, "abs": 20,
-    "upper_back": 18, "hip_abductors": 10,
+    "chest": 30, "front-deltoids": 25, "side-deltoids": 20,
+    "back-deltoids": 20, "triceps": 20, "biceps": 20,
+    "forearm": 15, "trapezius": 18, "upper-back": 25,
+    "lower-back": 18, "lats": 28, "abs": 20, "obliques": 15,
+    "quadriceps": 28, "hamstring": 22, "calves": 18,
+    "gluteal": 22, "abductors": 10,
+}
+
+# Anchor exercises per muscle (for Benchmark PR display)
+_MUSCLE_ANCHOR = {
+    "chest":          "Barbell Bench Press",
+    "triceps":        "Tricep Pushdowns",
+    "front-deltoids": "Frontal Plate Raises",
+    "side-deltoids":  "Cable Lateral Raises",
+    "back-deltoids":  "Cable Face Pulls",
+    "biceps":         "Cable Bicep Open Curls",
+    "forearm":        "Dumbbell Hammer Curls",
+    "trapezius":      "Trapezoid Raises",
+    "upper-back":     "Machine Closed Row",
+    "lower-back":     "Weighted Back Extensions",
+    "lats":           "Lat Pulldowns",
+    "abs":            "Abdominal Crunch Machine",
+    "quadriceps":     "Leg Extensions",
+    "hamstring":      "Lying Leg Curls",
+    "calves":         "Machine Calf Extensions",
+    "gluteal":        "Glute Machine",
+    "abductors":      "Hip Abduction Machine",
 }
 
 # 1RM gate benchmarks per muscle: { gate_level: required_ratio_to_bodyweight }
-# Uses the PRIMARY compound exercise for that muscle
 _STRENGTH_GATES = {
     "chest":      {20: 1.0, 40: 1.5, 60: 2.0},
-    "back":       {20: 1.0, 40: 1.4, 60: 1.8},
-    "shoulders":  {20: 0.6, 40: 0.9, 60: 1.2},
-    "quads":      {20: 1.2, 40: 1.8, 60: 2.5},
-    "hamstrings": {20: 0.8, 40: 1.2, 60: 1.6},
-    "glutes":     {20: 1.0, 40: 1.5, 60: 2.0},
+    "lats":       {20: 1.0, 40: 1.4, 60: 1.8},
+    "front-deltoids": {20: 0.6, 40: 0.9, 60: 1.2},
+    "quadriceps": {20: 1.2, 40: 1.8, 60: 2.5},
+    "hamstring":  {20: 0.8, 40: 1.2, 60: 1.6},
+    "gluteal":    {20: 1.0, 40: 1.5, 60: 2.0},
     "triceps":    {20: 0.5, 40: 0.75, 60: 1.0},
     "biceps":     {20: 0.4, 40: 0.6,  60: 0.8},
 }
@@ -847,14 +983,49 @@ def _get_bodyweight() -> float:
     return 70.0  # default
 
 
+def _resolve_activation(ex_id: str, ex_name: str) -> dict[str, float]:
+    """Get activation multipliers for an exercise.
+    Priority: ACTIVATION_MULTIPLIERS by name → by id → fallback to exercises.json.
+    """
+    # Try by display name first
+    if ex_name in ACTIVATION_MULTIPLIERS:
+        return ACTIVATION_MULTIPLIERS[ex_name]
+    # Try by exercise_id (snake_case)
+    if ex_id in _ACTIVATION_BY_ID:
+        return _ACTIVATION_BY_ID[ex_id]
+    # Fallback to exercises.json primary/secondary
+    info = _EXERCISE_MUSCLES.get(ex_id, {})
+    primary = info.get("muscle_group")
+    secondaries = info.get("secondary_muscles", [])
+    fallback: dict[str, float] = {}
+    if primary:
+        # Map old muscle names to library keys
+        fallback[_OLD_TO_LIB.get(primary, primary)] = 1.0
+    for s in secondaries:
+        fallback[_OLD_TO_LIB.get(s, s)] = 0.4
+    return fallback
+
+
+# Old muscle name → library muscle key mapping (for exercises.json fallback)
+_OLD_TO_LIB = {
+    "chest": "chest", "shoulders": "front-deltoids", "triceps": "triceps",
+    "back": "lats", "biceps": "biceps", "forearms": "forearm",
+    "rear_delts": "back-deltoids", "traps": "trapezius", "glutes": "gluteal",
+    "hamstrings": "hamstring", "quads": "quadriceps", "calves": "calves",
+    "lower_back": "lower-back", "abs": "abs", "upper_back": "upper-back",
+    "hip_abductors": "abductors",
+}
+
+
 @app.get("/muscle-levels")
 def get_muscle_levels():
     """
-    True-Level RPG system:
-    - Quality-Adjusted Tonnage XP  (intensity-weighted)
-    - Exponential level curve  (Base × Lv^2.5)
-    - 1RM strength gates       (bodyweight-ratio gated)
-    - Per-muscle 1RM estimation (Epley formula)
+    True-Level RPG with activation-weighted XP:
+    - Per-exercise activation ratios  (ACTIVATION_MULTIPLIERS)
+    - Quality-adjusted intensity      (e^(k × weight/1RM))
+    - Exponential level curve         (Base × Lv^2.5)
+    - 1RM strength gates on anchors   (bodyweight-ratio gated)
+    - Benchmark PR per muscle          (anchor exercise 1RM)
     """
     conn = _get_db()
     cursor = conn.cursor()
@@ -869,8 +1040,10 @@ def get_muscle_levels():
 
     bodyweight = _get_bodyweight()
 
-    # --- Pass 1: compute per-exercise 1RM estimates ---
-    exercise_max: dict[str, float] = {}  # ex_id → best 1RM
+    # --- Pass 1: per-exercise best 1RM + last-used weight/reps ---
+    exercise_max: dict[str, float] = {}           # ex_id → best 1RM
+    exercise_last: dict[str, tuple] = {}          # ex_id → (weight, reps) of heaviest set
+
     for r in rows:
         ex_id = r["exercise_id"]
         w = r["actual_weight"] or 0
@@ -878,66 +1051,76 @@ def get_muscle_levels():
         est = _estimate_1rm(w, reps)
         if est > exercise_max.get(ex_id, 0):
             exercise_max[ex_id] = est
+            exercise_last[ex_id] = (w, reps)
 
-    # --- Pass 2: compute per-muscle best 1RM (from primary compound) ---
-    muscle_1rm: dict[str, float] = {}
-    for ex_id, est_1rm in exercise_max.items():
-        info = _EXERCISE_MUSCLES.get(ex_id, {})
-        primary = info.get("muscle_group")
-        if primary and est_1rm > muscle_1rm.get(primary, 0):
-            muscle_1rm[primary] = est_1rm
+    # --- Pass 2: per-muscle anchor 1RM (Benchmark PR) ---
+    muscle_benchmark: dict[str, dict] = {}  # muscle → {1rm, exercise_name, weight, reps}
+    for muscle, anchor_name in _MUSCLE_ANCHOR.items():
+        anchor_id = anchor_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+        est_1rm = exercise_max.get(anchor_id, 0)
+        if est_1rm > 0:
+            w, reps = exercise_last.get(anchor_id, (0, 0))
+            muscle_benchmark[muscle] = {
+                "exercise_name": anchor_name,
+                "estimated_1rm": round(est_1rm, 1),
+                "best_weight": w,
+                "best_reps": reps,
+            }
 
-    # --- Pass 3: compute quality-adjusted XP per muscle ---
+    # --- Pass 3: quality-adjusted XP per muscle (activation-weighted) ---
     muscle_xp: dict[str, float] = {}
     muscle_exercises: dict[str, dict] = {}
 
     for r in rows:
         ex_id = r["exercise_id"]
+        ex_name = r["exercise_name"]
         weight = r["actual_weight"] or 0
         reps = r["actual_reps"] or 0
         if weight == 0 and reps == 0:
             continue
 
-        raw_volume = weight * reps
-        ex_info = _EXERCISE_MUSCLES.get(ex_id, {})
-        primary = ex_info.get("muscle_group")
-        secondaries = ex_info.get("secondary_muscles", [])
+        # For bodyweight / static exercises (weight 0 or 1), use a
+        # bodyweight-proxy so they still earn meaningful XP.
+        # Reps for timed exercises = seconds held.
+        effective_weight = weight if weight > 1 else (bodyweight * 0.3)
+        raw_volume = effective_weight * reps
 
         # Intensity multiplier:  e^(k × weight / 1RM)
         best_1rm = exercise_max.get(ex_id, 0)
-        if best_1rm > 0 and weight > 0:
+        if best_1rm > 0 and weight > 1:
             intensity_ratio = min(weight / best_1rm, 1.0)
             multiplier = math.exp(_INTENSITY_K * intensity_ratio)
         else:
-            multiplier = 1.0  # bodyweight / unknown exercises
+            multiplier = 1.0
 
-        xp_adjusted = raw_volume * multiplier
+        base_xp = raw_volume * multiplier
 
-        targets = []
-        if primary:
-            targets.append((primary, 1.0))
-        for sec in secondaries:
-            targets.append((sec, 0.4))
+        # Use activation multipliers
+        activations = _resolve_activation(ex_id, ex_name)
+        if not activations:
+            continue
 
-        for muscle, factor in targets:
-            xp_gain = xp_adjusted * factor
+        for muscle, ratio in activations.items():
+            xp_gain = base_xp * ratio
             muscle_xp[muscle] = muscle_xp.get(muscle, 0) + xp_gain
 
             if muscle not in muscle_exercises:
                 muscle_exercises[muscle] = {}
             if ex_id not in muscle_exercises[muscle]:
-                ex_name = ex_info.get("name", r["exercise_name"])
                 muscle_exercises[muscle][ex_id] = {
                     "exercise_id": ex_id,
                     "name": ex_name,
+                    "ratio": ratio,
                     "volume": 0, "sets": 0, "reps": 0,
+                    "last_weight": weight,
                 }
             entry = muscle_exercises[muscle][ex_id]
             entry["volume"] += xp_gain
             entry["sets"] += 1
             entry["reps"] += reps
+            entry["last_weight"] = weight  # track most recent weight
 
-    # --- Pass 4: apply strength gates + compute levels ---
+    # --- Pass 4: apply strength gates + compute levels + recommendations ---
     all_muscles = set(list(muscle_xp.keys()) + list(_MUSCLE_DISPLAY.keys()))
     levels = []
 
@@ -947,8 +1130,9 @@ def get_muscle_levels():
 
         # Check strength gates
         gates = _STRENGTH_GATES.get(muscle, {})
-        est_1rm = round(muscle_1rm.get(muscle, 0), 1)
-        bw_ratio = est_1rm / bodyweight if bodyweight > 0 else 0
+        benchmark = muscle_benchmark.get(muscle)
+        est_1rm = benchmark["estimated_1rm"] if benchmark else 0
+        bw_ratio = est_1rm / bodyweight if bodyweight > 0 and est_1rm > 0 else 0
 
         gate_blocked = False
         gate_message = ""
@@ -964,7 +1148,6 @@ def get_muscle_levels():
                     f"1RM must reach {required_kg}kg ({required_ratio}× BW) "
                     f"to unlock Lv.{gate_lvl}. Current: {est_1rm}kg ({bw_ratio:.2f}× BW)."
                 )
-                # Recalculate XP bar relative to the capped level
                 floor_xp = _xp_required_for_level(effective_level)
                 ceil_xp = _xp_required_for_level(effective_level + 1)
                 xp_in = xp - floor_xp
@@ -973,16 +1156,33 @@ def get_muscle_levels():
 
         target_lvl = _MUSCLE_TARGETS.get(muscle, 15)
 
+        # Build exercises list with level-up recommendations
         exercises_list = sorted(
             muscle_exercises.get(muscle, {}).values(),
             key=lambda e: e["volume"], reverse=True,
         )
+        xp_remaining = max(0, xp_need - max(xp_in, 0))
         for e in exercises_list:
             e["volume"] = round(e["volume"], 1)
+            # Calculate "reps needed at last weight to bridge the gap"
+            if xp_remaining > 0 and e["last_weight"] > 0 and e["ratio"] > 0:
+                # XP per rep ≈ weight × intensity_mult × ratio
+                ex_1rm = exercise_max.get(e["exercise_id"], e["last_weight"])
+                if ex_1rm > 0:
+                    intensity_ratio = min(e["last_weight"] / ex_1rm, 1.0)
+                    xp_per_rep = e["last_weight"] * math.exp(_INTENSITY_K * intensity_ratio) * e["ratio"]
+                else:
+                    xp_per_rep = e["last_weight"] * e["ratio"]
+                reps_needed = math.ceil(xp_remaining / xp_per_rep) if xp_per_rep > 0 else 0
+                e["reps_to_next"] = reps_needed
+                e["weight_for_calc"] = e["last_weight"]
+            else:
+                e["reps_to_next"] = None
+                e["weight_for_calc"] = None
 
         levels.append({
             "muscle": muscle,
-            "display_name": _MUSCLE_DISPLAY.get(muscle, muscle.replace("_", " ").title()),
+            "display_name": _MUSCLE_DISPLAY.get(muscle, muscle.replace("-", " ").replace("_", " ").title()),
             "level": effective_level,
             "raw_level": raw_level,
             "target_level": target_lvl,
@@ -990,7 +1190,7 @@ def get_muscle_levels():
             "xp_in_level": round(max(xp_in, 0), 1),
             "xp_for_next": round(xp_need, 1),
             "xp_pct": round(max(xp_in, 0) / xp_need * 100, 1) if xp_need > 0 else 100,
-            "estimated_1rm": est_1rm if est_1rm > 0 else None,
+            "benchmark": benchmark,  # {exercise_name, estimated_1rm, best_weight, best_reps} or null
             "bodyweight": round(bodyweight, 1),
             "gate_blocked": gate_blocked,
             "gate_message": gate_message,
@@ -1135,6 +1335,42 @@ def _safe_float(val):
         return None
 
 
+# ── Plan Weight Update ────────────────────────────────────────────────────────
+
+class PlanWeightUpdate(BaseModel):
+    week_id: int
+    day: int
+    exercise_id: str
+    weights: List[float]
+
+@app.put("/plan/weight")
+def update_plan_weight(body: PlanWeightUpdate):
+    """Update target weights for an exercise in the plan AND workout_logs."""
+    conn = _get_db()
+    cursor = conn.cursor()
+    weight_json = json.dumps(body.weights)
+
+    # Update workout_plan template
+    cursor.execute("""
+        UPDATE workout_plan
+        SET target_weight_json = ?
+        WHERE week_id = ? AND day = ? AND exercise_id = ?
+    """, (weight_json, body.week_id, body.day, body.exercise_id))
+
+    # Update individual sets in workout_logs (only unlogged sets)
+    for i, w in enumerate(body.weights):
+        cursor.execute("""
+            UPDATE workout_logs
+            SET target_weight = ?
+            WHERE week_id = ? AND day = ? AND exercise_id = ? AND set_number = ?
+              AND logged_at IS NULL
+        """, (w, body.week_id, body.day, body.exercise_id, i + 1))
+
+    conn.commit()
+    conn.close()
+    return {"ok": True, "updated_sets": len(body.weights)}
+
+
 # ── Plan Viewer ──────────────────────────────────────────────────────────────
 
 @app.get("/plan")
@@ -1216,16 +1452,25 @@ def _gather_user_context() -> str:
     """Build a compact summary of the user's current state for the AI."""
     parts = []
     targets = _load_targets()
-    parts.append(f"Targets — Weight: {targets['weight_kg']}kg, BF: {targets['bodyfat_pct']}%, Muscle: {targets['muscle_kg']}kg")
+    parts.append(f"Goals — Target weight: {targets['weight_kg']}kg, Target BF: {targets['bodyfat_pct']}%, Target muscle: {targets['muscle_kg']}kg")
 
     conn = _get_db()
     try:
         row = conn.execute("SELECT * FROM renpho_body_comp ORDER BY date DESC LIMIT 1").fetchone()
         if row:
             parts.append(
-                f"Latest body comp ({row['date']}): "
+                f"Current body comp ({row['date']}): "
                 f"Weight {row['weight_kg']}kg, BF {row['bodyfat_pct']}%, "
                 f"Muscle {row['muscle_mass_kg']}kg"
+            )
+            # Compute gap to target
+            w_gap = round(row['weight_kg'] - targets['weight_kg'], 1)
+            bf_gap = round(row['bodyfat_pct'] - targets['bodyfat_pct'], 1)
+            m_gap = round(targets['muscle_kg'] - row['muscle_mass_kg'], 1)
+            parts.append(
+                f"Gap to targets: weight {'+'if w_gap>0 else ''}{w_gap}kg, "
+                f"BF {'+'if bf_gap>0 else ''}{bf_gap}%, "
+                f"muscle need +{m_gap}kg"
             )
     except Exception:
         pass
@@ -1247,6 +1492,11 @@ def _gather_user_context() -> str:
         wk = cur.fetchone()[0]
         if wk:
             parts.append(f"Current training week: {wk}")
+            # Count completed days this week
+            done = cur.execute(
+                "SELECT COUNT(DISTINCT day) FROM workout_log WHERE week_id = ?", (wk,)
+            ).fetchone()[0]
+            parts.append(f"Workouts completed this week: {done}")
     except Exception:
         pass
 
@@ -1255,16 +1505,26 @@ def _gather_user_context() -> str:
     # ── Muscle RPG levels + strength gates ──
     try:
         ml_data = get_muscle_levels()
+        all_muscles = ml_data["muscle_levels"]
         gated = []
-        top5 = sorted(ml_data["muscle_levels"], key=lambda m: m["level"], reverse=True)[:5]
+        top5 = sorted(all_muscles, key=lambda m: m["level"], reverse=True)[:5]
+        bottom3 = sorted(all_muscles, key=lambda m: m["level"])[:3]
+        parts.append("Top 5 muscles:")
         for m in top5:
             line = f"  {m['display_name']}: Lv.{m['level']} ({m['xp']:.0f} XP)"
-            if m.get("estimated_1rm"):
-                line += f" | Est 1RM: {m['estimated_1rm']}kg"
+            bm = m.get("benchmark")
+            if bm:
+                line += f" | Benchmark PR: {bm['estimated_1rm']}kg ({bm['exercise_name']})"
             parts.append(line)
-        for m in ml_data["muscle_levels"]:
+        parts.append("Weakest muscles (focus areas):")
+        for m in bottom3:
+            parts.append(f"  {m['display_name']}: Lv.{m['level']} ({m['xp']:.0f} XP)")
+        for m in all_muscles:
             if m.get("gate_blocked"):
                 gated.append(f"  ⚠ {m['display_name']} GATE-BLOCKED at Lv.{m['level']}: {m['gate_message']}")
+        if gated:
+            parts.append("Strength gates (must be cleared to level up):")
+            parts.extend(gated)
         if gated:
             parts.append("Strength gates (must be cleared to level up):")
             parts.extend(gated)
@@ -1297,19 +1557,42 @@ def _summarise(messages: list) -> str:
         return ""
 
 
+def _next_conversation_id() -> str:
+    """Generate a date-based conversation ID: YYYY-MM-DD_N (e.g. 2026-02-24_1)."""
+    today = date.today().isoformat()  # '2026-02-24'
+    n = 1
+    while (_conversation_path(f"{today}_{n}")).exists():
+        n += 1
+    return f"{today}_{n}"
+
+
 @app.post("/chat")
 async def chat(body: ChatMessage):
-    cid = body.conversation_id or str(uuid4())
+    cid = body.conversation_id or _next_conversation_id()
     conv = _load_conversation(cid)
     conv["messages"].append({"role": "user", "content": body.message, "ts": datetime.now().isoformat()})
 
     user_ctx = _gather_user_context()
     system = (
-        "You are a friendly, expert gym and nutrition coach embedded in a fitness app. "
-        "You have access to the user's current stats below. "
-        "Give concise, actionable advice. Use metric units (kg, km). "
-        "Be motivating but honest.\n\n"
-        f"USER CONTEXT:\n{user_ctx}"
+        "You are a highly knowledgeable strength & body-recomposition coach embedded in a "
+        "fitness app. You combine evidence-based exercise science with practical gym wisdom.\n\n"
+        "COACHING PRINCIPLES:\n"
+        "• Prioritize progressive overload — small, consistent weight/rep increases matter most.\n"
+        "• Body recomposition (gaining muscle while losing fat) is the user's core goal. "
+        "Advise slight caloric surplus on training days, maintenance/slight deficit on rest days.\n"
+        "• Recommend 1.6-2.2g protein per kg bodyweight daily. Emphasize meal timing around workouts.\n"
+        "• Recovery is training — stress sleep quality (7-9h), hydration, and deload weeks.\n"
+        "• When muscles are gate-blocked, suggest specific strength progressions to break through.\n"
+        "• Reference the user's actual numbers (weight, body fat, muscle levels, PRs) to make advice concrete.\n"
+        "• Be concise and actionable. Use bullet points for multi-part answers.\n"
+        "• Use metric units (kg, km, cm). Be motivating but honest — celebrate PRs, flag plateaus.\n"
+        "• If the user asks about something outside fitness/nutrition, keep it brief and redirect.\n\n"
+        "TRAINING CONTEXT:\n"
+        "The user follows a periodized push/pull/legs split with progressive overload. "
+        "The app tracks an RPG-style muscle leveling system where quality-adjusted volume (XP) "
+        "determines muscle levels 0-60+, with strength gates at levels 20, 40, and 60 "
+        "requiring specific 1RM benchmarks relative to bodyweight.\n\n"
+        f"USER DATA:\n{user_ctx}"
     )
 
     recent = conv["messages"][-20:]
@@ -1343,6 +1626,85 @@ async def chat(body: ChatMessage):
 
     _save_conversation(conv)
     return {"conversation_id": cid, "reply": ai_reply}
+
+
+@app.post("/chat/stream")
+async def chat_stream(body: ChatMessage):
+    """Streaming version of /chat — returns Server-Sent Events with incremental tokens."""
+    cid = body.conversation_id or _next_conversation_id()
+    conv = _load_conversation(cid)
+    conv["messages"].append({"role": "user", "content": body.message, "ts": datetime.now().isoformat()})
+
+    user_ctx = _gather_user_context()
+    system = (
+        "You are a highly knowledgeable strength & body-recomposition coach embedded in a "
+        "fitness app. You combine evidence-based exercise science with practical gym wisdom.\n\n"
+        "COACHING PRINCIPLES:\n"
+        "• Prioritize progressive overload — small, consistent weight/rep increases matter most.\n"
+        "• Body recomposition (gaining muscle while losing fat) is the user's core goal. "
+        "Advise slight caloric surplus on training days, maintenance/slight deficit on rest days.\n"
+        "• Recommend 1.6-2.2g protein per kg bodyweight daily. Emphasize meal timing around workouts.\n"
+        "• Recovery is training — stress sleep quality (7-9h), hydration, and deload weeks.\n"
+        "• When muscles are gate-blocked, suggest specific strength progressions to break through.\n"
+        "• Reference the user's actual numbers (weight, body fat, muscle levels, PRs) to make advice concrete.\n"
+        "• Be concise and actionable. Use bullet points for multi-part answers.\n"
+        "• Use metric units (kg, km, cm). Be motivating but honest — celebrate PRs, flag plateaus.\n"
+        "• If the user asks about something outside fitness/nutrition, keep it brief and redirect.\n\n"
+        "TRAINING CONTEXT:\n"
+        "The user follows a periodized push/pull/legs split with progressive overload. "
+        "The app tracks an RPG-style muscle leveling system where quality-adjusted volume (XP) "
+        "determines muscle levels 0-60+, with strength gates at levels 20, 40, and 60 "
+        "requiring specific 1RM benchmarks relative to bodyweight.\n\n"
+        f"USER DATA:\n{user_ctx}"
+    )
+
+    recent = conv["messages"][-20:]
+    prompt_parts = []
+    for m in recent:
+        prefix = "User" if m["role"] == "user" else "Coach"
+        prompt_parts.append(f"{prefix}: {m['content']}")
+    prompt_text = "\n".join(prompt_parts) + "\nCoach:"
+
+    def generate():
+        full_reply = ""
+        try:
+            with http_requests.post(
+                OLLAMA_URL,
+                json={
+                    "model": CHAT_MODEL,
+                    "system": system,
+                    "prompt": prompt_text,
+                    "stream": True,
+                    "options": {"temperature": 0.7},
+                },
+                stream=True,
+                timeout=120,
+            ) as resp:
+                resp.raise_for_status()
+                for line in resp.iter_lines():
+                    if not line:
+                        continue
+                    chunk = json.loads(line)
+                    token = chunk.get("response", "")
+                    if token:
+                        full_reply += token
+                        yield f"data: {json.dumps({'token': token})}\n\n"
+                    if chunk.get("done"):
+                        break
+        except Exception as e:
+            error_msg = f"Sorry, I couldn't reach the AI model. ({e})"
+            full_reply = error_msg
+            yield f"data: {json.dumps({'token': error_msg})}\n\n"
+
+        # Save conversation after streaming completes
+        conv["messages"].append({"role": "assistant", "content": full_reply.strip(), "ts": datetime.now().isoformat()})
+        if len(conv["messages"]) % 10 == 0:
+            conv["summary"] = _summarise(conv["messages"])
+        _save_conversation(conv)
+
+        yield f"data: {json.dumps({'done': True, 'conversation_id': cid})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.get("/chat/history")

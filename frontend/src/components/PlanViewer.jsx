@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react';
-import { fetchPlan } from '../api/client';
+import { Loader2, ChevronLeft, ChevronRight, Dumbbell, Pencil, Check } from 'lucide-react';
+import { fetchPlan, updatePlanWeight } from '../api/client';
 import { SUPERSET_COLORS, DAY_NAMES } from '../lib/constants';
 
 /**
@@ -121,57 +121,121 @@ export default function PlanViewer() {
             {/* Exercise list */}
             {isOpen && (
               <div className="border-t border-zinc-800 divide-y divide-zinc-800/60">
-                {exercises.map((ex, i) => {
-                  const ss = ex.superset_group;
-                  const ssColor = ss && SUPERSET_COLORS[ss];
-                  return (
-                    <div
-                      key={`${ex.exercise}-${i}`}
-                      className={`px-4 py-3 ${ss && ssColor ? `border-l-4 ${ssColor.border}` : ''}`}
-                    >
-                      {/* Name + meta */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-zinc-200 leading-snug">{ex.exercise}</p>
-                          <div className="flex gap-2 mt-0.5 text-[0.6rem] text-zinc-500">
-                            <span>{ex.sets} sets</span>
-                            <span>{ex.target_reps} reps</span>
-                            {ex.strategy && ex.strategy !== 'linear' && (
-                              <span className="text-zinc-600">{ex.strategy}</span>
-                            )}
-                          </div>
-                        </div>
-                        {ss && ssColor && (
-                          <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${ssColor.badge}`}>
-                            SS-{ss}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Set-by-set weight + reps table */}
-                      <div className="grid grid-cols-[2.5rem_1fr_1fr] gap-x-2 gap-y-1">
-                        {ex.weights.map((w, si) => (
-                          <div key={si} className="contents">
-                            <span className="text-[0.65rem] font-semibold text-zinc-500 text-center leading-6">
-                              S{si + 1}
-                            </span>
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-sky-400">
-                              {w} kg
-                            </div>
-                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-400">
-                              {ex.target_reps} reps
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                {exercises.map((ex, i) => (
+                  <PlanExerciseRow
+                    key={`${ex.exercise}-${i}`}
+                    ex={ex}
+                    day={day}
+                    weekId={weekId}
+                  />
+                ))}
               </div>
             )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+
+// ── Editable Exercise Row ────────────────────────────────────────────────────
+function PlanExerciseRow({ ex, day, weekId }) {
+  const ss = ex.superset_group;
+  const ssColor = ss && SUPERSET_COLORS[ss];
+  const [editing, setEditing] = useState(false);
+  const [weights, setWeights] = useState(ex.weights || []);
+  const [saving, setSaving] = useState(false);
+
+  const handleWeightChange = (idx, value) => {
+    const next = [...weights];
+    next[idx] = parseFloat(value) || 0;
+    setWeights(next);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const exId = ex.exercise_id || ex.exercise.toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, '');
+      await updatePlanWeight(weekId, day, exId, weights);
+      setEditing(false);
+    } catch {
+      /* fail silently */
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={`px-4 py-3 ${ss && ssColor ? `border-l-4 ${ssColor.border}` : ''}`}>
+      {/* Name + meta */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-zinc-200 leading-snug">{ex.exercise}</p>
+          <div className="flex gap-2 mt-0.5 text-[0.6rem] text-zinc-500">
+            <span>{ex.sets} sets</span>
+            <span>{ex.target_reps} reps</span>
+            {ex.strategy && ex.strategy !== 'linear' && (
+              <span className="text-zinc-600">{ex.strategy}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {ss && ssColor && (
+            <span className={`text-[0.55rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${ssColor.badge}`}>
+              SS-{ss}
+            </span>
+          )}
+          {ex.weights?.length > 0 && !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="p-1.5 rounded-lg text-zinc-600 active:text-zinc-300 cursor-pointer"
+              title="Edit weights"
+            >
+              <Pencil size={13} />
+            </button>
+          )}
+          {editing && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="p-1.5 rounded-lg text-emerald-400 active:text-emerald-300 cursor-pointer disabled:opacity-50"
+              title="Save weights"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Set-by-set weight + reps table */}
+      {weights.length > 0 && (
+        <div className="grid grid-cols-[2.5rem_1fr_1fr] gap-x-2 gap-y-1">
+          {weights.map((w, si) => (
+            <div key={si} className="contents">
+              <span className="text-[0.65rem] font-semibold text-zinc-500 text-center leading-6">
+                S{si + 1}
+              </span>
+              {editing ? (
+                <input
+                  type="number"
+                  step="0.5"
+                  value={w}
+                  onChange={(e) => handleWeightChange(si, e.target.value)}
+                  className="bg-zinc-900 border border-sky-500/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-sky-400 focus:outline-none focus:border-sky-400 w-full"
+                />
+              ) : (
+                <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-sky-400">
+                  {w} kg
+                </div>
+              )}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-sm font-semibold text-zinc-400">
+                {ex.target_reps} reps
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

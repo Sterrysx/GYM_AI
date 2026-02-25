@@ -13,7 +13,7 @@ import { hasCompletedDays } from './api/client';
 
 export default function App() {
   const [activeView, setActiveView] = useState('stats');
-  const { week, day, exercises, loading, error, load } = useWorkout();
+  const { week, weeks, day, exercises, loading, error, load } = useWorkout();
   const { toast, showToast } = useToast();
   const [strengthUnlocked, setStrengthUnlocked] = useState(false);
 
@@ -28,19 +28,25 @@ export default function App() {
 
   const handleSelectDay = (dayId) => {
     setActiveView('workout');
-    load(dayId);
+    load(dayId, week);
+  };
+
+  const handleSelectWeek = (weekId) => {
+    if (day) load(day, weekId);
   };
 
   const handleGenerated = () => {
-    if (day) load(day);
+    if (day) load(day, week);
   };
 
   return (
     <>
       <Layout
         week={week}
+        weeks={weeks}
         activeDay={day}
         onSelectDay={handleSelectDay}
+        onSelectWeek={handleSelectWeek}
         onGenerated={handleGenerated}
         showToast={showToast}
         activeView={activeView}
@@ -60,7 +66,7 @@ export default function App() {
             error={error}
             onError={(msg) => showToast(msg, true)}
             showToast={showToast}
-            onDayCompleted={() => { if (day) load(day); checkStrengthUnlock(); }}
+            onDayCompleted={() => { if (day) load(day, week); checkStrengthUnlock(); }}
           />
         )}
       </Layout>

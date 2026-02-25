@@ -1,205 +1,138 @@
 /**
- * MuscleMap — Cyberpunk "Level 2" interactive anatomical body map.
+ * MuscleMap — Cyberpunk body map using react-body-highlighter.
  *
  * Features:
- *  • Clean SVG bodies (no text labels) with neon glow by intensity
- *  • Framer-Motion glassmorphism tooltip on hover/tap
- *  • RPG level cards with XP bars, tier gates, and 1RM strength locks
- *  • Smooth CSS transitions on all path elements
+ *  • Professional anatomical SVG via <Model /> (anterior + posterior)
+ *  • Neon glow palette by level tier (cyan → purple → emerald → crimson)
+ *  • Hover tooltips on each muscle region
+ *  • Framer-Motion glassmorphism detail panel with:
+ *      - Benchmark PR (anchor exercise 1RM)
+ *      - Dynamic per-exercise level-up recommendations
+ *      - XP progress bars and gate badges
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Model from 'react-body-highlighter';
 import {
   Loader2, Swords, Star, ChevronRight, X, TrendingUp,
-  Dumbbell, Trophy, Target, Zap, Lock, ShieldCheck, Flame,
+  Dumbbell, Trophy, Target, Zap, Lock, Flame,
 } from 'lucide-react';
 import { fetchMuscleLevels } from '../api/client';
 
 // ── Cyberpunk neon palette (0-7 intensity scale) ─────────────────────────────
-//    0-1 : dim grey / slate          — no glow
-//    2-3 : cyan                      — medium glow
-//    4-5 : purple                    — strong glow
-//    6-7 : emerald → crimson         — intense glow
 const NEON = [
-  // 0  Untrained
-  { fill: 'rgba(63,63,70,0.30)',  stroke: '#3f3f46', glow: '',                                              tier: 'Untrained',  tierColor: 'text-zinc-600', accent: '#52525b' },
-  // 1  Novice
-  { fill: 'rgba(100,116,139,0.30)', stroke: '#64748b', glow: '',                                            tier: 'Novice',     tierColor: 'text-slate-400', accent: '#64748b' },
-  // 2  Trained
-  { fill: 'rgba(6,182,212,0.35)',  stroke: '#06b6d4', glow: 'drop-shadow(0 0 8px rgba(6,182,212,0.6))',     tier: 'Trained',    tierColor: 'text-cyan-400', accent: '#06b6d4' },
-  // 3  Intermediate
-  { fill: 'rgba(6,182,212,0.50)',  stroke: '#22d3ee', glow: 'drop-shadow(0 0 10px rgba(6,182,212,0.75))',   tier: 'Intermediate', tierColor: 'text-cyan-300', accent: '#22d3ee' },
-  // 4  Advanced
-  { fill: 'rgba(168,85,247,0.40)', stroke: '#a855f7', glow: 'drop-shadow(0 0 12px rgba(168,85,247,0.8))',   tier: 'Advanced',   tierColor: 'text-purple-400', accent: '#a855f7' },
-  // 5  Expert
-  { fill: 'rgba(168,85,247,0.55)', stroke: '#c084fc', glow: 'drop-shadow(0 0 14px rgba(168,85,247,0.9))',   tier: 'Expert',     tierColor: 'text-purple-300', accent: '#c084fc' },
-  // 6  Elite
-  { fill: 'rgba(16,185,129,0.50)', stroke: '#10b981', glow: 'drop-shadow(0 0 20px rgba(16,185,129,1))',     tier: 'Elite',      tierColor: 'text-emerald-400', accent: '#10b981' },
-  // 7  Legend
-  { fill: 'rgba(239,68,68,0.55)',  stroke: '#ef4444', glow: 'drop-shadow(0 0 22px rgba(239,68,68,1))',      tier: 'Legend',     tierColor: 'text-red-400', accent: '#ef4444' },
+  { fill: '#3f3f46', tier: 'Untrained',    tierColor: 'text-zinc-600', accent: '#52525b' },
+  { fill: '#64748b', tier: 'Novice',       tierColor: 'text-slate-400', accent: '#64748b' },
+  { fill: '#06b6d4', tier: 'Trained',      tierColor: 'text-cyan-400', accent: '#06b6d4' },
+  { fill: '#22d3ee', tier: 'Intermediate', tierColor: 'text-cyan-300', accent: '#22d3ee' },
+  { fill: '#a855f7', tier: 'Advanced',     tierColor: 'text-purple-400', accent: '#a855f7' },
+  { fill: '#c084fc', tier: 'Expert',       tierColor: 'text-purple-300', accent: '#c084fc' },
+  { fill: '#10b981', tier: 'Elite',        tierColor: 'text-emerald-400', accent: '#10b981' },
+  { fill: '#ef4444', tier: 'Legend',       tierColor: 'text-red-400', accent: '#ef4444' },
 ];
 
+function getNeonIndex(level) {
+  if (level <= 0) return 0;
+  if (level <= 4) return 1;
+  if (level <= 9) return 2;
+  if (level <= 14) return 3;
+  if (level <= 19) return 4;
+  if (level <= 29) return 5;
+  if (level <= 39) return 6;
+  return 7;
+}
+
 function getNeon(level) {
-  // Map any level (0-99) to the 0-7 neon scale
-  const idx = Math.min(Math.floor(level / 8), 7); // 0-7 = 0, 8-15 = 1, 16-23 = 2, ...
-  // But for the new system levels can be 0-60+, so use tiers:
-  // 0 → 0, 1-4 → 1, 5-9 → 2, 10-14 → 3, 15-19 → 4, 20-29 → 5, 30-39 → 6, 40+ → 7
-  if (level <= 0) return NEON[0];
-  if (level <= 4) return NEON[1];
-  if (level <= 9) return NEON[2];
-  if (level <= 14) return NEON[3];
-  if (level <= 19) return NEON[4];
-  if (level <= 29) return NEON[5];
-  if (level <= 39) return NEON[6];
-  return NEON[7];
+  return NEON[getNeonIndex(level)];
 }
 
-// ── Muscle-group → SVG element ids ───────────────────────────────────────────
-const MUSCLE_SVG_IDS = {
-  chest:      { front: ['chest'] },
-  shoulders:  { front: ['shoulders-l', 'shoulders-r'] },
-  abs:        { front: ['abs'] },
-  biceps:     { front: ['biceps-l', 'biceps-r'] },
-  forearms:   { front: ['forearms-l', 'forearms-r'] },
-  triceps:    { front: ['triceps-l', 'triceps-r'], back: ['triceps-bl', 'triceps-br'] },
-  quads:      { front: ['quads-l', 'quads-r'] },
-  calves:     { front: ['calves-l', 'calves-r'], back: ['calves-bl', 'calves-br'] },
-  back:       { back: ['back-upper', 'back-lat-l', 'back-lat-r'] },
-  traps:      { back: ['traps'] },
-  rear_delts: { back: ['rear_delts-l', 'rear_delts-r'] },
-  lower_back: { back: ['lower_back'] },
-  glutes:     { back: ['glutes'] },
-  hamstrings: { back: ['hamstrings-l', 'hamstrings-r'] },
-};
+// Gradient palette for react-body-highlighter (indexed by frequency)
+const HIGHLIGHT_COLORS = NEON.map((n) => n.fill);
 
-// ── Glassmorphism Tooltip ────────────────────────────────────────────────────
-function NeonTooltip({ muscle, position }) {
-  if (!muscle || !position) return null;
+// Polygon → muscle slug mapping (matches the library's internal SVG render order)
+const ANTERIOR_POLYGON_MAP = [
+  ...Array(2).fill('chest'),
+  ...Array(2).fill('obliques'),
+  ...Array(2).fill('abs'),
+  ...Array(2).fill('biceps'),
+  ...Array(2).fill('triceps'),
+  ...Array(2).fill('neck'),
+  ...Array(2).fill('front-deltoids'),
+  ...Array(1).fill('head'),
+  ...Array(2).fill('abductors'),
+  ...Array(6).fill('quadriceps'),
+  ...Array(2).fill('knees'),
+  ...Array(4).fill('calves'),
+  ...Array(4).fill('forearm'),
+];
+
+const POSTERIOR_POLYGON_MAP = [
+  ...Array(1).fill('head'),
+  ...Array(2).fill('trapezius'),
+  ...Array(2).fill('back-deltoids'),
+  ...Array(2).fill('upper-back'),
+  ...Array(4).fill('triceps'),
+  ...Array(2).fill('lower-back'),
+  ...Array(4).fill('forearm'),
+  ...Array(2).fill('gluteal'),
+  ...Array(2).fill('adductor'),
+  ...Array(4).fill('hamstring'),
+  ...Array(2).fill('knees'),
+  ...Array(4).fill('calves'),
+  ...Array(1).fill('left-soleus'),
+  ...Array(1).fill('right-soleus'),
+];
+
+
+// ── Hover Tooltip ────────────────────────────────────────────────────────────
+function HoverTooltip({ info }) {
+  if (!info) return null;
+  const { muscle, cx, cy } = info;
   const neon = getNeon(muscle.level);
-  const gate = muscle.gate_blocked ? 'GATE LOCKED' : null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        key={muscle.muscle}
-        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="absolute z-40 pointer-events-none px-3.5 py-2.5 rounded-xl border bg-black/80 backdrop-blur-md min-w-[160px]"
-        style={{
-          left: position.x,
-          top: position.y,
-          borderColor: `${neon.stroke}66`,
-          boxShadow: neon.glow ? `0 0 20px ${neon.stroke}40` : 'none',
-        }}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <div
-            className="w-7 h-7 rounded-md flex items-center justify-center font-black text-xs border"
-            style={{ borderColor: neon.stroke, background: neon.fill, color: neon.stroke }}
-          >
-            {muscle.level}
-          </div>
-          <div>
-            <div className="text-xs font-bold text-white">{muscle.display_name}</div>
-            <div className={`text-[0.55rem] font-semibold ${neon.tierColor}`}>{neon.tier}</div>
-          </div>
-        </div>
-        {/* XP mini bar */}
-        <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-1">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${muscle.xp_pct}%`, background: neon.stroke }} />
-        </div>
-        <div className="flex justify-between mt-0.5">
-          <span className="text-[0.45rem] text-zinc-500">Lv.{muscle.level}</span>
-          <span className="text-[0.45rem] text-zinc-500">{Math.round(muscle.xp_pct)}% → Lv.{muscle.level + 1}</span>
-        </div>
-        {gate && (
-          <div className="flex items-center gap-1 mt-1.5 text-[0.55rem] text-amber-400">
-            <Lock size={8} />
-            <span className="font-semibold">{gate}</span>
-            <span className="text-zinc-500 ml-0.5">— {muscle.gate_message}</span>
-          </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-
-// ── Body SVG Viewer with neon glow ───────────────────────────────────────────
-function BodyView({ svgUrl, muscleLevels, view, onMuscleClick, onMuscleHover, onMuscleLeave, selectedMuscle }) {
-  const containerRef = useRef(null);
-  const [svgLoaded, setSvgLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSvgLoaded(false);
-    fetch(svgUrl)
-      .then((r) => r.text())
-      .then((text) => {
-        if (cancelled || !containerRef.current) return;
-        containerRef.current.innerHTML = text;
-        setSvgLoaded(true);
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [svgUrl]);
-
-  useEffect(() => {
-    if (!svgLoaded || !containerRef.current) return;
-    const svgEl = containerRef.current.querySelector('svg');
-    if (!svgEl) return;
-
-    // Reset
-    svgEl.querySelectorAll('.muscle-region').forEach((el) => {
-      el.style.fill = 'rgba(50,50,50,0.2)';
-      el.style.stroke = '#444';
-      el.style.strokeWidth = '0.6';
-      el.style.filter = '';
-      el.style.transition = 'all 0.3s ease-in-out';
-    });
-
-    // Apply neon colours
-    for (const [muscle, ids] of Object.entries(MUSCLE_SVG_IDS)) {
-      const pathIds = ids[view] || [];
-      const data = muscleLevels.find((m) => m.muscle === muscle);
-      if (!data) continue;
-      const neon = getNeon(data.level);
-
-      for (const pathId of pathIds) {
-        const el = svgEl.getElementById(pathId);
-        if (!el) continue;
-        el.style.fill = neon.fill;
-        el.style.stroke = neon.stroke;
-        el.style.strokeWidth = selectedMuscle === muscle ? '2' : '1';
-        el.style.filter = selectedMuscle === muscle
-          ? `${neon.glow} drop-shadow(0 0 4px ${neon.stroke})`
-          : neon.glow;
-        el.style.cursor = 'pointer';
-
-        el.onclick = (e) => { e.stopPropagation(); onMuscleClick(muscle); };
-        el.onmouseenter = (e) => {
-          const rect = containerRef.current.getBoundingClientRect();
-          onMuscleHover(muscle, { x: e.clientX - rect.left + 10, y: e.clientY - rect.top - 80 });
-        };
-        el.onmouseleave = () => onMuscleLeave();
-        el.ontouchstart = (e) => {
-          e.preventDefault();
-          const touch = e.touches[0];
-          const rect = containerRef.current.getBoundingClientRect();
-          onMuscleHover(muscle, { x: touch.clientX - rect.left + 10, y: touch.clientY - rect.top - 80 });
-          setTimeout(() => onMuscleClick(muscle), 300);
-        };
-      }
-    }
-  }, [svgLoaded, muscleLevels, view, selectedMuscle, onMuscleClick, onMuscleHover, onMuscleLeave]);
-
+  const bm = muscle.benchmark;
   return (
     <div
-      ref={containerRef}
-      className="relative flex-1 flex items-center justify-center [&>svg]:max-h-[55vh] [&>svg]:w-auto"
-    />
+      className="fixed z-[100] pointer-events-none bg-zinc-900/95 backdrop-blur-sm border border-zinc-700/80 rounded-lg px-3 py-2.5 shadow-2xl min-w-40"
+      style={{
+        left: cx + 16,
+        top: cy,
+        transform: 'translateY(-100%)',
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs font-bold text-zinc-100">{muscle.display_name}</span>
+        <span
+          className="text-[0.55rem] font-bold px-1.5 py-0.5 rounded"
+          style={{ background: `${neon.fill}22`, color: neon.fill }}
+        >
+          Lv.{muscle.level}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 text-[0.55rem] text-zinc-400 mb-1.5">
+        <span className={`font-semibold ${neon.tierColor}`}>{neon.tier}</span>
+        <span>·</span>
+        <span>{Math.round(muscle.xp).toLocaleString()} XP</span>
+      </div>
+      <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden mb-1">
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{ width: `${muscle.xp_pct}%`, background: neon.fill }}
+        />
+      </div>
+      <div className="flex justify-between text-[0.45rem] text-zinc-600">
+        <span>Lv.{muscle.level}</span>
+        <span>{Math.round(muscle.xp_pct)}%</span>
+        <span>Lv.{muscle.level + 1}</span>
+      </div>
+      {bm && (
+        <div className="mt-1.5 pt-1.5 border-t border-zinc-800 text-[0.55rem] text-zinc-400">
+          <span className="text-amber-400 font-semibold">{bm.estimated_1rm}kg</span> PR · {bm.exercise_name}
+        </div>
+      )}
+      {muscle.gate_blocked && (
+        <div className="mt-1 text-[0.5rem] text-amber-400 font-semibold">⚠ Strength Gate Active</div>
+      )}
+    </div>
   );
 }
 
@@ -214,7 +147,7 @@ function XpBar({ pct, level }) {
         initial={{ width: 0 }}
         animate={{ width: `${Math.min(pct, 100)}%` }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
-        style={{ background: `linear-gradient(90deg, ${neon.stroke}55, ${neon.stroke})` }}
+        style={{ background: `linear-gradient(90deg, ${neon.fill}55, ${neon.fill})` }}
       />
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-[0.5rem] font-bold text-white/80 drop-shadow">{Math.round(pct)}%</span>
@@ -224,7 +157,7 @@ function XpBar({ pct, level }) {
 }
 
 
-// ── Tier Gate Badge ──────────────────────────────────────────────────────────
+// ── Gate Badge ───────────────────────────────────────────────────────────────
 function GateBadge({ gate }) {
   if (!gate) return null;
   return (
@@ -245,6 +178,7 @@ function MuscleDetailPanel({ muscle, onClose }) {
   const neon = getNeon(muscle.level);
   const targetNeon = getNeon(muscle.target_level);
   const xpRemaining = Math.max(0, muscle.xp_for_next - muscle.xp_in_level);
+  const bm = muscle.benchmark; // {exercise_name, estimated_1rm, best_weight, best_reps} | null
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
@@ -254,22 +188,22 @@ function MuscleDetailPanel({ muscle, onClose }) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-        className="relative w-full max-w-lg bg-zinc-950 border-t rounded-t-2xl p-5 pb-8"
-        style={{ borderColor: `${neon.stroke}44` }}
+        className="relative w-full max-w-lg bg-zinc-950 border-t rounded-t-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
+        style={{ borderColor: `${neon.fill}44` }}
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-3 right-3 text-zinc-500 active:text-zinc-300 cursor-pointer p-1">
           <X size={18} />
         </button>
-        <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: `${neon.stroke}66` }} />
+        <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: `${neon.fill}66` }} />
 
         {/* Title */}
         <div className="flex items-center gap-3 mb-4">
           <div
             className="w-14 h-14 rounded-xl flex items-center justify-center border-2"
-            style={{ borderColor: neon.stroke, background: neon.fill, boxShadow: neon.glow ? `0 0 16px ${neon.stroke}55` : 'none' }}
+            style={{ borderColor: neon.fill, background: `${neon.fill}22`, boxShadow: `0 0 16px ${neon.fill}55` }}
           >
-            <span className="text-xl font-black" style={{ color: neon.stroke }}>{muscle.level}</span>
+            <span className="text-xl font-black" style={{ color: neon.fill }}>{muscle.level}</span>
           </div>
           <div>
             <h3 className="text-lg font-bold">{muscle.display_name}</h3>
@@ -297,7 +231,7 @@ function MuscleDetailPanel({ muscle, onClose }) {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-center">
             <Zap size={12} className="mx-auto mb-1 text-cyan-400" />
@@ -310,11 +244,12 @@ function MuscleDetailPanel({ muscle, onClose }) {
             <div className="text-[0.55rem] text-zinc-500 uppercase tracking-wide">XP to Next</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-center">
-            {muscle.estimated_1rm ? (
+            {bm ? (
               <>
                 <Flame size={12} className="mx-auto mb-1 text-amber-400" />
-                <div className="text-sm font-bold">{muscle.estimated_1rm}kg</div>
-                <div className="text-[0.55rem] text-zinc-500 uppercase tracking-wide">Est. 1RM</div>
+                <div className="text-sm font-bold">{bm.estimated_1rm}kg</div>
+                <div className="text-[0.55rem] text-zinc-500 uppercase tracking-wide">Benchmark PR</div>
+                <div className="text-[0.45rem] text-zinc-600 mt-0.5 truncate">{bm.exercise_name}</div>
               </>
             ) : (
               <>
@@ -326,27 +261,38 @@ function MuscleDetailPanel({ muscle, onClose }) {
           </div>
         </div>
 
-        {/* How to level up */}
+        {/* Level-Up Recommendations */}
         {xpRemaining > 0 && (
           <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400 mb-1">
               <TrendingUp size={12} />
-              How to level up
+              How to reach Level {muscle.level + 1}
             </div>
-            <p className="text-[0.7rem] text-zinc-400 leading-relaxed">
-              {muscle.gate_blocked ? (
-                <>
-                  <span className="text-amber-300 font-semibold">Strength gate active.</span>{' '}
-                  {muscle.gate_message}
-                </>
-              ) : (
-                <>
+            {muscle.gate_blocked ? (
+              <p className="text-[0.7rem] text-zinc-400 leading-relaxed">
+                <span className="text-amber-300 font-semibold">Strength gate active.</span>{' '}
+                {muscle.gate_message}
+              </p>
+            ) : (
+              <>
+                <p className="text-[0.7rem] text-zinc-400 leading-relaxed mb-2">
                   You need <span className="text-cyan-300 font-semibold">{Math.round(xpRemaining).toLocaleString()} more XP</span> to reach Level {muscle.level + 1}.
-                  {' '}XP scales with intensity — lifting heavier (closer to your 1RM) earns exponentially more.
-                  {' '}Try <span className="text-zinc-200 font-semibold">{Math.ceil(xpRemaining / 30)} reps at 30kg</span> or <span className="text-zinc-200 font-semibold">{Math.ceil(xpRemaining / 60)} reps at 60kg</span>.
-                </>
-              )}
-            </p>
+                  Here's what to do next session:
+                </p>
+                {muscle.exercises?.filter(e => e.reps_to_next != null).length > 0 && (
+                  <div className="space-y-1">
+                    {muscle.exercises.filter(e => e.reps_to_next != null).slice(0, 4).map((ex) => (
+                      <div key={ex.exercise_id} className="flex items-center justify-between bg-zinc-900/80 rounded-md px-2 py-1.5">
+                        <span className="text-[0.65rem] text-zinc-300 truncate flex-1">{ex.name}</span>
+                        <span className="text-[0.65rem] font-bold text-cyan-400 shrink-0 ml-2">
+                          +{ex.reps_to_next} reps @ {ex.weight_for_calc}kg
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -360,11 +306,14 @@ function MuscleDetailPanel({ muscle, onClose }) {
             <div className="space-y-1.5 max-h-40 overflow-y-auto">
               {muscle.exercises.map((ex) => (
                 <div key={ex.exercise_id} className="flex items-center justify-between bg-zinc-900/60 border border-zinc-800/50 rounded-lg px-3 py-2">
-                  <span className="text-xs font-medium truncate flex-1">{ex.name}</span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-xs font-medium truncate">{ex.name}</span>
+                    <span className="text-[0.5rem] text-zinc-600 shrink-0">×{ex.ratio}</span>
+                  </div>
                   <div className="flex items-center gap-3 shrink-0 text-xs text-zinc-400">
                     <span>{ex.sets}s</span>
                     <span>{ex.reps}r</span>
-                    <span className="font-semibold" style={{ color: neon.stroke }}>{Math.round(ex.volume).toLocaleString()}</span>
+                    <span className="font-semibold" style={{ color: neon.fill }}>{Math.round(ex.volume).toLocaleString()}</span>
                   </div>
                 </div>
               ))}
@@ -385,10 +334,7 @@ function NeonLegend() {
     <div className="flex flex-wrap gap-1.5 justify-center px-4 py-2">
       {NEON.map((n, i) => (
         <div key={i} className="flex items-center gap-1">
-          <div
-            className="w-3 h-3 rounded-sm border transition-all"
-            style={{ background: n.fill, borderColor: n.stroke, filter: n.glow || 'none' }}
-          />
+          <div className="w-3 h-3 rounded-sm border border-zinc-700" style={{ background: n.fill }} />
           <span className={`text-[0.5rem] ${n.tierColor}`}>{n.tier.slice(0, 3)}</span>
         </div>
       ))}
@@ -414,9 +360,9 @@ function MuscleCards({ muscles, onSelect }) {
           >
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0 transition-all duration-300"
-              style={{ borderColor: neon.stroke, background: neon.fill, boxShadow: neon.glow ? `0 0 8px ${neon.stroke}44` : 'none' }}
+              style={{ borderColor: neon.fill, background: `${neon.fill}22`, boxShadow: `0 0 8px ${neon.fill}44` }}
             >
-              <span className="text-xs font-black" style={{ color: neon.stroke }}>{m.level}</span>
+              <span className="text-xs font-black" style={{ color: neon.fill }}>{m.level}</span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
@@ -427,7 +373,7 @@ function MuscleCards({ muscles, onSelect }) {
                 <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${m.xp_pct}%`, background: neon.stroke }}
+                    style={{ width: `${m.xp_pct}%`, background: neon.fill }}
                   />
                 </div>
                 {atTarget ? (
@@ -449,10 +395,10 @@ function MuscleCards({ muscles, onSelect }) {
 export default function MuscleMap() {
   const [levels, setLevels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('front');
-  const [selectedMuscle, setSelectedMuscle] = useState(null);
+  const [view, setView] = useState('anterior');
   const [detailMuscle, setDetailMuscle] = useState(null);
-  const [tooltip, setTooltip] = useState({ muscle: null, pos: null });
+  const [hoverInfo, setHoverInfo] = useState(null);
+  const modelRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -464,21 +410,87 @@ export default function MuscleMap() {
     })();
   }, []);
 
-  const handleMuscleClick = useCallback((muscle) => {
-    setSelectedMuscle(muscle);
-    setTooltip({ muscle: null, pos: null });
+  // Map backend muscle keys → library-supported SVG muscle slugs.
+  // Some backend muscles don't have their own SVG region, so we merge them
+  // into the closest visual equivalent for highlighting purposes.
+  const MUSCLE_TO_SVG = {
+    'chest': 'chest',
+    'front-deltoids': 'front-deltoids',
+    'side-deltoids': 'front-deltoids',   // no SVG region; highlight front delts
+    'back-deltoids': 'back-deltoids',
+    'triceps': 'triceps',
+    'biceps': 'biceps',
+    'forearm': 'forearm',
+    'trapezius': 'trapezius',
+    'upper-back': 'upper-back',
+    'lower-back': 'lower-back',
+    'lats': 'upper-back',               // no SVG region; highlight upper back
+    'abs': 'abs',
+    'obliques': 'obliques',
+    'quadriceps': 'quadriceps',
+    'hamstring': 'hamstring',
+    'calves': 'calves',
+    'gluteal': 'gluteal',
+    'abductors': 'abductors',
+  };
+
+  // Build the data array for react-body-highlighter.
+  // Aggregate frequency (max neon tier) when multiple backend muscles map to
+  // the same SVG slug (e.g. lats + upper-back both → upper-back).
+  const svgBuckets = {};
+  for (const m of levels) {
+    const slug = MUSCLE_TO_SVG[m.muscle];
+    if (!slug) continue;                       // skip unknown muscles entirely
+    const freq = getNeonIndex(m.level) + 1;    // 1-indexed for highlightedColors
+    if (!svgBuckets[slug] || freq > svgBuckets[slug].freq) {
+      svgBuckets[slug] = { freq, name: m.display_name };
+    }
+  }
+  const modelData = Object.entries(svgBuckets).map(([slug, { freq, name }]) => ({
+    name,
+    muscles: [slug],
+    frequency: freq,
+  }));
+
+  const handleModelClick = useCallback(({ muscle }) => {
     const data = levels.find((m) => m.muscle === muscle);
     if (data) setDetailMuscle(data);
   }, [levels]);
 
-  const handleMuscleHover = useCallback((muscle, pos) => {
-    const data = levels.find((m) => m.muscle === muscle);
-    if (data) setTooltip({ muscle: data, pos });
-  }, [levels]);
+  // Build reverse map: SVG slug → backend muscle key(s)
+  const svgToBackend = {};
+  for (const [key, slug] of Object.entries(MUSCLE_TO_SVG)) {
+    if (!svgToBackend[slug]) svgToBackend[slug] = [];
+    svgToBackend[slug].push(key);
+  }
 
-  const handleMuscleLeave = useCallback(() => {
-    setTooltip({ muscle: null, pos: null });
-  }, []);
+  // Tag SVG polygons with data-muscle attributes after each render
+  useEffect(() => {
+    if (!modelRef.current) return;
+    const polygons = modelRef.current.querySelectorAll('polygon');
+    const map = view === 'anterior' ? ANTERIOR_POLYGON_MAP : POSTERIOR_POLYGON_MAP;
+    polygons.forEach((p, i) => {
+      if (map[i]) p.setAttribute('data-muscle', map[i]);
+    });
+  }, [view, levels, loading]);
+
+  // Hover handler for the model container
+  const handleModelPointerMove = useCallback((e) => {
+    const slug = e.target.getAttribute?.('data-muscle');
+    if (!slug) { setHoverInfo(null); return; }
+    // Map SVG slug to backend muscle keys (reverse of MUSCLE_TO_SVG)
+    const backendKeys = svgToBackend[slug] || [slug];
+    const matches = levels.filter((m) => backendKeys.includes(m.muscle));
+    if (matches.length === 0) { setHoverInfo(null); return; }
+    const best = matches.sort((a, b) => b.level - a.level)[0];
+    setHoverInfo({
+      muscle: best,
+      cx: e.clientX,
+      cy: e.clientY,
+    });
+  }, [levels, svgToBackend]);
+
+  const handleModelPointerLeave = useCallback(() => setHoverInfo(null), []);
 
   const totalLevel = levels.reduce((s, m) => s + m.level, 0);
   const totalXp = levels.reduce((s, m) => s + m.xp, 0);
@@ -525,44 +537,54 @@ export default function MuscleMap() {
 
       {/* View Toggle */}
       <div className="flex items-center justify-center gap-2 px-4 mb-2">
-        {['front', 'back'].map((v) => (
+        {[
+          { key: 'anterior', label: 'Front' },
+          { key: 'posterior', label: 'Back' },
+        ].map(({ key, label }) => (
           <button
-            key={v}
-            onClick={() => setView(v)}
+            key={key}
+            onClick={() => setView(key)}
             className={`px-5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all cursor-pointer border ${
-              view === v
+              view === key
                 ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
                 : 'bg-zinc-900/60 border-zinc-800/50 text-zinc-500'
             }`}
           >
-            {v}
+            {label}
           </button>
         ))}
       </div>
 
-      {/* Body SVG + tooltip */}
-      <div className="relative flex justify-center px-4 py-2 min-h-[50vh]">
-        <BodyView
-          svgUrl={view === 'front' ? '/body_front.svg' : '/body_back.svg'}
-          muscleLevels={levels}
-          view={view}
-          onMuscleClick={handleMuscleClick}
-          onMuscleHover={handleMuscleHover}
-          onMuscleLeave={handleMuscleLeave}
-          selectedMuscle={selectedMuscle}
+      {/* Body Model */}
+      <div
+        className="flex justify-center px-4 py-2 relative"
+        ref={modelRef}
+        onPointerMove={handleModelPointerMove}
+        onPointerLeave={handleModelPointerLeave}
+      >
+        <Model
+          data={modelData}
+          style={{ width: '16rem', padding: '1rem' }}
+          onClick={handleModelClick}
+          type={view}
+          bodyColor="#1f2937"
+          highlightedColors={HIGHLIGHT_COLORS}
         />
-        <NeonTooltip muscle={tooltip.muscle} position={tooltip.pos} />
+        <HoverTooltip info={hoverInfo} />
       </div>
 
       <NeonLegend />
 
       <p className="text-center text-[0.6rem] text-zinc-600 mb-3">Tap a muscle to see your level & how to progress</p>
 
-      <MuscleCards muscles={levels} onSelect={handleMuscleClick} />
+      <MuscleCards muscles={levels} onSelect={(muscle) => {
+        const data = levels.find((m) => m.muscle === muscle);
+        if (data) setDetailMuscle(data);
+      }} />
 
       <AnimatePresence>
         {detailMuscle && (
-          <MuscleDetailPanel muscle={detailMuscle} onClose={() => { setDetailMuscle(null); setSelectedMuscle(null); }} />
+          <MuscleDetailPanel muscle={detailMuscle} onClose={() => setDetailMuscle(null)} />
         )}
       </AnimatePresence>
     </div>

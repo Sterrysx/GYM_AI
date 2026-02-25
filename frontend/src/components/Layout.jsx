@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList, TrendingUp } from 'lucide-react';
+import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import DaySelector from './DaySelector';
 import { generateNextWeek } from '../api/client';
 
@@ -8,9 +8,9 @@ import { generateNextWeek } from '../api/client';
  * - Title + week badge
  * - Generate Next Week button
  * - Tab navigation: Dashboard | Workout
- * - Day selector (visible only on Workout tab)
+ * - Week switcher + Day selector (visible only on Workout tab)
  */
-export default function Layout({ week, activeDay, onSelectDay, onGenerated, showToast, activeView, onViewChange, strengthUnlocked = true, children }) {
+export default function Layout({ week, weeks = [], activeDay, onSelectDay, onSelectWeek, onGenerated, showToast, activeView, onViewChange, strengthUnlocked = true, children }) {
   const [generating, setGenerating] = useState(false);
 
   const handleGenerate = async () => {
@@ -88,9 +88,38 @@ export default function Layout({ week, activeDay, onSelectDay, onGenerated, show
           })}
         </div>
 
-        {/* Day selector — only on Workout tab */}
+        {/* Week switcher + Day selector — only on Workout tab */}
         {activeView === 'workout' && (
-          <DaySelector activeDay={activeDay} onSelect={onSelectDay} />
+          <>
+            {weeks.length > 1 && (
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <button
+                  onClick={() => {
+                    const idx = weeks.indexOf(week);
+                    if (idx > 0) onSelectWeek(weeks[idx - 1]);
+                  }}
+                  disabled={weeks.indexOf(week) <= 0}
+                  className="p-1.5 rounded-lg text-zinc-400 active:bg-zinc-800 cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                  Week {week}
+                </span>
+                <button
+                  onClick={() => {
+                    const idx = weeks.indexOf(week);
+                    if (idx < weeks.length - 1) onSelectWeek(weeks[idx + 1]);
+                  }}
+                  disabled={weeks.indexOf(week) >= weeks.length - 1}
+                  className="p-1.5 rounded-lg text-zinc-400 active:bg-zinc-800 cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+            <DaySelector activeDay={activeDay} onSelect={onSelectDay} />
+          </>
         )}
       </header>
 

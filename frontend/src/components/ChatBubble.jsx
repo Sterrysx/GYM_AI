@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Bot, X, Send, Loader2, Trash2 } from 'lucide-react';
-import { sendChatMessage } from '../api/client';
+import Markdown from 'react-markdown';
+import { streamChatMessage } from '../api/client';
 
 /**
- * Floating AI chat bubble.
+ * Floating AI chat bubble with streaming responses.
  * - Collapsed: pulsing circle icon at bottom-right.
  * - Expanded: full chat panel with message history + input.
  */
@@ -15,6 +16,8 @@ export default function ChatBubble() {
   const [convId, setConvId] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const streamingRef = useRef('');
+  const rafRef = useRef(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -34,15 +37,44 @@ export default function ChatBubble() {
     setInput('');
     setSending(true);
 
+    // Add empty assistant message to be filled in incrementally
+    streamingRef.current = '';
+    setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+    const flushToUI = () => {
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === 'assistant') {
+          updated[updated.length - 1] = { ...last, content: streamingRef.current };
+        }
+        return updated;
+      });
+      rafRef.current = null;
+    };
+
     try {
-      const res = await sendChatMessage(text, convId);
-      setConvId(res.conversation_id);
-      setMessages((prev) => [...prev, { role: 'assistant', content: res.reply }]);
+      const result = await streamChatMessage(text, convId, (token) => {
+        streamingRef.current += token;
+        if (!rafRef.current) {
+          rafRef.current = requestAnimationFrame(flushToUI);
+        }
+      });
+
+      // Final flush to ensure all tokens are shown
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      flushToUI();
+      setConvId(result.conversation_id);
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `Error: ${err.message}` },
-      ]);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === 'assistant') {
+          updated[updated.length - 1] = { ...last, content: `Error: ${err.message}` };
+        }
+        return updated;
+      });
     } finally {
       setSending(false);
     }
@@ -107,23 +139,24 @@ export default function ChatBubble() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-sky-500 text-black rounded-br-md'
-                      : 'bg-zinc-800 text-zinc-200 rounded-bl-md'
+                      ? 'bg-sky-500 text-black rounded-br-md whitespace-pre-wrap'
+                      : 'bg-zinc-800 text-zinc-200 rounded-bl-md prose prose-invert prose-sm prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-headings:text-zinc-100 prose-strong:text-zinc-100 prose-code:text-cyan-300 prose-code:bg-zinc-900 prose-code:px-1 prose-code:rounded max-w-none'
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    msg.content ? (
+                      <Markdown>{msg.content}</Markdown>
+                    ) : (
+                      <Loader2 size={16} className="animate-spin text-zinc-400" />
+                    )
+                  )}
                 </div>
               </div>
             ))}
-            {sending && (
-              <div className="flex justify-start">
-                <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-3">
-                  <Loader2 size={16} className="animate-spin text-zinc-400" />
-                </div>
-              </div>
-            )}
             <div ref={bottomRef} />
           </div>
 

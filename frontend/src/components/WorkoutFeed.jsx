@@ -129,7 +129,15 @@ export default function WorkoutFeed({ exercises, week, day, loading, error, onEr
   return (
     <div className="pt-3 pb-24 space-y-0">
       {rendered}
-      {staticExercises.length > 0 && <AbsAccordion exercises={staticExercises} />}
+      {staticExercises.length > 0 && (
+        <AbsAccordion
+          exercises={staticExercises}
+          week={week}
+          day={day}
+          showToast={showToast}
+          onReload={onDayCompleted}
+        />
+      )}
 
       {/* ── Complete Day button ── */}
       {exercises.length > 0 && (

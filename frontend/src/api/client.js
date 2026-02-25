@@ -10,8 +10,9 @@ const api = axios.create({
  * Fetch the workout plan for a given day, including already-logged data.
  * Each exercise includes `sets_data` with per-set logged state.
  */
-export async function fetchWorkout(dayId) {
-  const { data } = await api.get(`/workout/${dayId}`);
+export async function fetchWorkout(dayId, weekId = null) {
+  const params = weekId ? { week_id: weekId } : {};
+  const { data } = await api.get(`/workout/${dayId}`, { params });
   if (data.error) throw new Error(data.error);
   return data;
 }
@@ -130,6 +131,54 @@ export async function sendChatMessage(message, conversationId = null) {
 }
 
 /**
+ * Stream a chat message from the AI coach (SSE).
+ * Calls onToken(string) for each incremental token.
+ * Returns { conversation_id, full_reply } when done.
+ */
+export async function streamChatMessage(message, conversationId, onToken) {
+  const response = await fetch('/chat/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, conversation_id: conversationId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Chat stream failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullReply = '';
+  let convId = conversationId;
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE lines from buffer
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.done) {
+          convId = data.conversation_id;
+        } else if (data.token) {
+          fullReply += data.token;
+          onToken(data.token);
+        }
+      } catch { /* partial JSON, skip */ }
+    }
+  }
+
+  return { conversation_id: convId, full_reply: fullReply };
+}
+
+/**
  * List all past conversations (summaries).
  */
 export async function fetchChatHistory() {
@@ -142,6 +191,19 @@ export async function fetchChatHistory() {
  */
 export async function fetchConversation(conversationId) {
   const { data } = await api.get(`/chat/${conversationId}`);
+  return data;
+}
+
+/**
+ * Update target weights for an exercise in the plan.
+ */
+export async function updatePlanWeight(weekId, day, exerciseId, weights) {
+  const { data } = await api.put('/plan/weight', {
+    week_id: weekId,
+    day,
+    exercise_id: exerciseId,
+    weights,
+  });
   return data;
 }
 
@@ -175,5 +237,13 @@ export async function fetchAllProgressions() {
  */
 export async function fetchMuscleLevels() {
   const { data } = await api.get('/muscle-levels');
+  return data;
+}
+
+/**
+ * Fetch abs routine incomplete-seconds history across weeks.
+ */
+export async function fetchAbsHistory() {
+  const { data } = await api.get('/abs/history');
   return data;
 }

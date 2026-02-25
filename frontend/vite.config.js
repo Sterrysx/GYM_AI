@@ -21,8 +21,19 @@ export default defineConfig({
       '/targets': 'http://localhost:8000',
       '/muscle-levels': 'http://localhost:8000',
       '/webhook': 'http://127.0.0.1:8000',
+      '/chat/stream': {
+        target: 'http://localhost:8000',
+        // Disable response buffering for SSE streaming
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-cache';
+            proxyRes.headers['x-accel-buffering'] = 'no';
+          });
+        },
+      },
       '/chat': 'http://localhost:8000',
       '/plan': 'http://localhost:8000',
+      '/abs': 'http://localhost:8000',
     }
   }
 })

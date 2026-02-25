@@ -1,27 +1,29 @@
-.PHONY: clean build reset dev-backend dev-frontend update-week log-weight stop
+.PHONY: start reset nuke-db stop dev-backend dev-frontend log-weight
 
-# Preserves the /data lake (CSVs)
-clean:
-	rm -f backend/gym.db backend/gym_routine_master.xlsx
-	@echo "✅ Cleaned DB and Excel. Metrics CSVs preserved."
-
-build:
-	mkdir -p data/workouts data/metrics
-	cd backend && python3 generate_routine.py && python3 init_db.py
-	@echo "✅ Database is fresh."
-
-# Updated reset to use 8000 for the backend consistency
-reset: stop clean build
-	@echo "🔄 Auto-fetching Renpho metrics..."
-	-cd backend && python3 fetch_renpho.py || echo "Warning: Renpho fetch failed."
-	@echo "🚀 Starting servers..."
-	# Backend starts on port 8000 (default in your main.py)
-	cd backend && python3 main.py & 
-	# Vite will now use your config's 'host: true' automatically
+# 1. THE DAILY COMMAND: Safely boots everything without deleting data
+start: stop
+	@echo "🚀 Starting servers safely (Database Preserved)..."
+	-cd backend && python3 fetch_renpho.py || echo "Renpho fetch skipped."
+	cd backend && python3 main.py &
 	cd frontend && npm run dev -- --host
 
+# 2. SAFE RESET: Rebuilds plan but preserves the actual .db file
+reset: stop
+	@echo "🔄 Rebuilding routine blueprint (Preserving History)..."
+	mkdir -p data/workouts data/metrics
+	cd backend && python3 generate_routine.py && python3 init_db.py
+	@echo "✅ Servers starting..."
+	cd backend && python3 main.py &
+	cd frontend && npm run dev -- --host
+
+# 3. DESTRUCTIVE WIPE: Only use if you want to lose ALL progress
+nuke-db: stop
+	@echo "☢️  WARNING: Wiping SQLite Database and Excel Blueprint..."
+	rm -f backend/gym.db backend/gym_routine_master.xlsx
+	@echo "✅ Cleaned DB and Excel. Metrics CSVs preserved. Run 'make reset' to rebuild."
+
 stop:
-	@echo "🛑 Killing existing servers..."
+	@echo "🛑 Killing existing servers on 8000 and 5173..."
 	-pkill -f "python3 main.py" || true
 	-lsof -t -i:8000 | xargs kill -9 2>/dev/null || true
 	-lsof -t -i:5173 | xargs kill -9 2>/dev/null || true
