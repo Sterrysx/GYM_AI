@@ -35,8 +35,10 @@ export default function App() {
     if (day) load(day, weekId);
   };
 
-  const handleGenerated = () => {
-    if (day) load(day, week);
+  const handleGenerated = (newWeek) => {
+    const targetDay = day || 1;
+    load(targetDay, newWeek || null);
+    setActiveView('workout');
   };
 
   return (

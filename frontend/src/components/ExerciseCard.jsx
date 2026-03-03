@@ -27,6 +27,23 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast, 
     ? SUPERSET_COLORS[superset_group]?.border ?? ''
     : '';
 
+  // Build rep range label from per-set data when reps differ across sets
+  const numericSetReps = setsData
+    .map((s) => s?.target_reps)
+    .filter((r) => r != null && !isNaN(Number(r)))
+    .map(Number);
+  const hasNonNumeric = setsData.some(
+    (s) => s?.target_reps != null && isNaN(Number(s.target_reps))
+  );
+  const repsLabel = (() => {
+    if (numericSetReps.length === 0) {
+      return hasNonNumeric ? null : targetReps != null ? `${targetReps} reps` : null;
+    }
+    const minR = Math.min(...numericSetReps);
+    const maxR = Math.max(...numericSetReps);
+    return minR === maxR ? `${minR} reps` : `${minR}–${maxR} reps`;
+  })();
+
   const [completing, setCompleting] = useState(false);
 
   // Track locally-logged sets so we don't reload after each individual log
@@ -85,7 +102,7 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast, 
       </div>
       <div className="flex gap-3 px-4 pb-2 text-xs text-zinc-500">
         <span>{numSets} sets</span>
-        <span>{targetReps} reps</span>
+        {repsLabel && <span>{repsLabel}</span>}
         {strategy && <span>{strategy}</span>}
       </div>
       <div className="px-2.5 pb-1">
@@ -100,7 +117,7 @@ export default function ExerciseCard({ exercise, week, day, onError, showToast, 
             key={i}
             index={i}
             weight={weights[i]}
-            targetReps={targetReps}
+            targetReps={setsData[i]?.target_reps ?? targetReps}
             setData={setsData[i]}
             weekId={week}
             day={day}

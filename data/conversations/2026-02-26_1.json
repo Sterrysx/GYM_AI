@@ -1,0 +1,27 @@
+{
+  "id": "2026-02-26_1",
+  "created": "2026-02-26T23:48:32.737129",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hola",
+      "ts": "2026-02-26T23:48:32.737135"
+    },
+    {
+      "role": "assistant",
+      "content": "\u00a1Hola! \u00bfC\u00f3mo est\u00e1s? \u00bfHay algo espec\u00edfico sobre tu entrenamiento o nutrici\u00f3n que te gustar\u00eda discutir hoy?\n\nAqu\u00ed tienes un resumen r\u00e1pido de tus datos actuales para tener en cuenta:\n\n- **Peso actual:** 69.6 kg\n- **Masa muscular:** 55.3 kg\n- **Grasa corporal:** 14.3%\n- **Objetivos:** Peso objetivo 67.5 kg, grasa corporal 13%, masa muscular 57.0 kg\n\n\u00bfTe gustar\u00eda trabajar en alg\u00fan \u00e1rea espec\u00edfica hoy? Por ejemplo:\n- Aumentar el volumen de entrenamiento para tus m\u00fasculos m\u00e1s d\u00e9biles.\n- Ajustes en la nutrici\u00f3n para acercarte a tus objetivos.\n- Consejos sobre c\u00f3mo romper los bloques de progreso.\n\n\u00a1Cu\u00e9ntame!",
+      "ts": "2026-02-26T23:48:41.284147"
+    },
+    {
+      "role": "user",
+      "content": "Analiza mis datos",
+      "ts": "2026-02-26T23:48:53.319684"
+    },
+    {
+      "role": "assistant",
+      "content": "Claro, vamos a analizar tus datos actuales y ver c\u00f3mo podemos avanzar hacia tus objetivos:\n\n### Datos Actuales:\n- **Peso actual:** 69.6 kg\n- **Masa muscular:** 55.3 kg\n- **Grasa corporal:** 14.3%\n- **Objetivos:** Peso objetivo: 67.5 kg, grasa corporal: 13%, masa muscular: 57.0 kg\n\n### Brecha con los Objetivos:\n- **Peso a perder:** -2.1 kg\n- **Grasa corporal a reducir:** -1.3%\n- **Masa muscular a ganar:** +1.7 kg\n\n### \u00daltima Actividad (2026-02-25):\n- **Pasos:** 1716\n- **Distancia recorrida:** 1.33 km\n- **Calidad del sue\u00f1o:** 8.8 horas\n\n### Musculatura:\n- **M\u00fasculos Fuertes:**\n  - Triceps: Lv.10 (XP: 16367) | Benchmark PR: 102.0 kg (Tricep Pushdowns)\n  - Abs: Lv.9 (XP: 15586) | Benchmark PR: 60.0 kg (Abdominal Crunch Machine)\n  - Glutes: Lv.7 (XP: 8278) | Benchmark PR: 58.5 kg (Glute Machine)\n  - Obliques: Lv.7 (XP: 6709)\n  - Chest: Lv.6 (XP: 6458) | Benchmark PR: 78.8 kg (Barbell Bench Press)\n\n- **M\u00fasculos D\u00e9biles:**\n  - Hip Abductors: Lv.0 (0 XP)\n  - Rear Delts: Lv.1 (138 XP)\n  - Side Delts: Lv.2 (495 XP)\n\n### Recomendaciones:\n#### Nutrici\u00f3n:\n- **Entrenamiento d\u00edas:** Mant\u00e9n un super\u00e1vit cal\u00f3rico ligeramente positivo para promover el crecimiento muscular.\n- **D\u00edas de descanso:** Mant\u00e9n una ingesta cal\u00f3rica en mantenimiento o ligera deficiencia para perder grasa.\n\n#### Entrenamiento:\n1. **Hip Abductors:**\n   - **Ejercicios recomendados:** Sentadillas laterales, estocadas laterales, m\u00e1quina abductora de piernas.\n   - **Rutina sugerida:** 3 series de 8-12 repeticiones.\n\n2. **Rear Delts y Side Delts:**\n   - **Ejercicios recomendados:** Remos inversos con mancuerna, levantamiento lateral con mancuerna, remo al pecho con barra.\n   - **Rutina sugerida:** 3 series de 8-12 repeticiones.\n\n#### Recuperaci\u00f3n:\n- Aseg\u00farate de mantener una calidad de sue\u00f1o \u00f3ptima (7-9 horas).\n- Mant\u00e9n un buen estado de hidrataci\u00f3n.\n- Considera incorporar semanas de descarga cada 4-6 semanas para evitar el sobreentrenamiento.\n\n### Siguientes Pasos:\n1. **Nutrici\u00f3n:** Ajusta tu ingesta cal\u00f3rica seg\u00fan los d\u00edas de entrenamiento y descanso.\n2. **Entrenamiento:** Enf\u00f3cate en fortalecer tus m\u00fasculos d\u00e9biles incorporando ejercicios espec\u00edficos.\n3. **Recuperaci\u00f3n:** Prioriza el sue\u00f1o y la hidrataci\u00f3n.\n\n\u00bfAlguna pregunta o necesitas m\u00e1s detalles sobre alguno de estos puntos?",
+      "ts": "2026-02-26T23:49:14.964498"
+    }
+  ],
+  "summary": ""
+}

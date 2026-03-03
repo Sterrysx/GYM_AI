@@ -597,8 +597,30 @@ def generate_next_week():
         raise HTTPException(status_code=400, detail="Incomplete logs.")
 
     try:
-        run_weekly_update()
-        return {"status": "success"}
+        new_week = run_weekly_update(use_ai_review=False)
+        return {"status": "success", "new_week": new_week}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/ai-review/{week_id}")
+def trigger_ai_review(week_id: int):
+    """Trigger an AI review of a deterministically-generated week."""
+    conn = _get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM workout_plan WHERE week_id = ?", (week_id,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    if count == 0:
+        raise HTTPException(status_code=404, detail=f"Week {week_id} not found.")
+    try:
+        from weekly_coach import ai_review, apply_ai_suggestions
+        prev_week = week_id - 1
+        review = ai_review(prev_week, week_id)
+        suggestions = review.get("suggestions", []) if review else []
+        if suggestions:
+            apply_ai_suggestions(week_id, suggestions)
+        return {"status": "success", "suggestions_applied": len(suggestions), "suggestions": suggestions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
