@@ -1,0 +1,210 @@
+{
+  "date": "2026-03-08",
+  "week_id": 2,
+  "day": 2,
+  "exercises": [
+    {
+      "exercise": "Lat Pulldowns",
+      "exercise_id": "lat_pulldowns",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 75.0,
+          "actual_weight": 75.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 65.0,
+          "actual_weight": 65.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Machine Closed Row",
+      "exercise_id": "machine_closed_row",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 40.0,
+          "actual_weight": 40.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 40.0,
+          "actual_weight": 40.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Standing Finger Plate Curls",
+      "exercise_id": "standing_finger_plate_curls",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Cable Bicep Open Curls",
+      "exercise_id": "cable_bicep_open_curls",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 22.5,
+          "actual_weight": 22.5,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 21.25,
+          "actual_weight": 21.25,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 20.0,
+          "actual_weight": 20.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Reverse Cable Flyes",
+      "exercise_id": "reverse_cable_flyes",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 3.75,
+          "actual_weight": 3.75,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 2.5,
+          "actual_weight": 2.5,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 2.5,
+          "actual_weight": 2.5,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Dumbbell Hammer Curls",
+      "exercise_id": "dumbbell_hammer_curls",
+      "strategy": "linear",
+      "planned_reps": "9",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 18.0,
+          "actual_weight": 18.0,
+          "actual_reps": 9,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 18.0,
+          "actual_weight": 18.0,
+          "actual_reps": 9,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 16.0,
+          "actual_weight": 16.0,
+          "actual_reps": 9,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Trapezoid Raises",
+      "exercise_id": "trapezoid_raises",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 26.0,
+          "actual_weight": 26.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 22.0,
+          "actual_weight": 22.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 22.0,
+          "actual_weight": 22.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    }
+  ]
+}

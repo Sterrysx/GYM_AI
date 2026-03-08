@@ -1,0 +1,181 @@
+{
+  "date": "2026-03-08",
+  "week_id": 2,
+  "day": 4,
+  "exercises": [
+    {
+      "exercise": "Flat Dumbbell Bench Press",
+      "exercise_id": "flat_dumbbell_bench_press",
+      "strategy": "linear",
+      "planned_reps": "8",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 28.0,
+          "actual_weight": 28.0,
+          "actual_reps": 8,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 26.0,
+          "actual_weight": 26.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 26.0,
+          "actual_weight": 26.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Incline Dumbbell Bench Press",
+      "exercise_id": "incline_dumbbell_bench_press",
+      "strategy": "linear",
+      "planned_reps": "9",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 22.0,
+          "actual_weight": 22.0,
+          "actual_reps": 9,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 22.0,
+          "actual_weight": 22.0,
+          "actual_reps": 8,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 22.0,
+          "actual_weight": 22.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Machine Open Row",
+      "exercise_id": "machine_open_row",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 55.0,
+          "actual_weight": 55.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 45.0,
+          "actual_weight": 45.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Closed Grip Lat Pulldown",
+      "exercise_id": "closed_grip_lat_pulldown",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 45.0,
+          "actual_weight": 45.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Push Ups",
+      "exercise_id": "push_ups",
+      "strategy": "linear",
+      "planned_reps": "Failure",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 15,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 13,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 11,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Pull Ups",
+      "exercise_id": "pull_ups",
+      "strategy": "linear",
+      "planned_reps": "Failure",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 0.0,
+          "actual_weight": 0.0,
+          "actual_reps": 5,
+          "rpe": null
+        }
+      ]
+    }
+  ]
+}

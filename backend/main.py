@@ -262,11 +262,11 @@ def get_stats():
 
     cycle_map = {
         1: (5, "5", 0.75, "Strength"),
-        2: (4, "4", 0.82, "Strength+"),
-        3: (3, "3", 0.88, "Heavy"),
-        4: (2, "2", 0.92, "Peak"),
+        2: (4, "4", 0.80, "Strength+"),
+        3: (3, "3", 0.85, "Heavy"),
+        4: (2, "2", 0.90, "Peak"),
         5: (3, "5", 0.60, "Deload"),
-        6: (1, "1", 1.02, "PR Test"),
+        6: (1, "1", 1.00, "PR Test"),
     }
     c_sets, c_reps, c_int, c_label = cycle_map.get(bench_cycle_week, (5, "5", 0.75, "Strength"))
     bench_weight = round(bench_1rm * c_int / 2.5) * 2.5
@@ -952,15 +952,28 @@ _MUSCLE_ANCHOR = {
 }
 
 # 1RM gate benchmarks per muscle: { gate_level: required_ratio_to_bodyweight }
+# Based on average-man strength standards (ExRx / Symmetric Strength / Strength Level)
+# for a ~70 kg male.  Lv 20 = novice, Lv 40 = intermediate, Lv 60 = advanced.
 _STRENGTH_GATES = {
-    "chest":      {20: 1.0, 40: 1.5, 60: 2.0},
-    "lats":       {20: 1.0, 40: 1.4, 60: 1.8},
-    "front-deltoids": {20: 0.6, 40: 0.9, 60: 1.2},
-    "quadriceps": {20: 1.2, 40: 1.8, 60: 2.5},
-    "hamstring":  {20: 0.8, 40: 1.2, 60: 1.6},
-    "gluteal":    {20: 1.0, 40: 1.5, 60: 2.0},
-    "triceps":    {20: 0.5, 40: 0.75, 60: 1.0},
-    "biceps":     {20: 0.4, 40: 0.6,  60: 0.8},
+    # ── Compounds ────────────────────────────────────────────────────
+    "chest":          {20: 0.75, 40: 1.0,  60: 1.5},   # Bench Press
+    "lats":           {20: 0.7,  40: 1.0,  60: 1.3},   # Lat Pulldown
+    "quadriceps":     {20: 0.6,  40: 0.9,  60: 1.3},   # Leg Extension
+    "hamstring":      {20: 0.4,  40: 0.6,  60: 0.9},   # Lying Leg Curl
+    "gluteal":        {20: 0.5,  40: 0.8,  60: 1.2},   # Glute Machine
+    "upper-back":     {20: 0.6,  40: 0.9,  60: 1.2},   # Machine Closed Row
+    "lower-back":     {20: 0.15, 40: 0.3,  60: 0.45},  # Weighted Back Ext.
+    "abs":            {20: 0.5,  40: 0.8,  60: 1.1},   # Ab Crunch Machine
+    # ── Isolation ────────────────────────────────────────────────────
+    "triceps":        {20: 0.35, 40: 0.55, 60: 0.75},  # Tricep Pushdowns
+    "biceps":         {20: 0.25, 40: 0.4,  60: 0.55},  # Cable Bicep Curls
+    "front-deltoids": {20: 0.15, 40: 0.25, 60: 0.35},  # Frontal Plate Raise
+    "side-deltoids":  {20: 0.06, 40: 0.1,  60: 0.15},  # Cable Lateral Raise
+    "back-deltoids":  {20: 0.3,  40: 0.5,  60: 0.7},   # Cable Face Pull
+    "trapezius":      {20: 0.25, 40: 0.4,  60: 0.55},  # Trapezoid Raises
+    "forearm":        {20: 0.2,  40: 0.35, 60: 0.5},   # Hammer Curls
+    "calves":         {20: 0.7,  40: 1.1,  60: 1.5},   # Machine Calf Ext.
+    "abductors":      {20: 0.8,  40: 1.2,  60: 1.6},   # Hip Abduction
 }
 
 # --- XP constants ---

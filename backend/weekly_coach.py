@@ -36,12 +36,12 @@ MODEL_NAME = "qwen2.5:32b"
 # ── Bench periodization percentages (6-week wave) ───────────────────────────
 # Each cycle week defines: (sets, reps_per_set, %1RM per set)
 BENCH_CYCLE = {
-    1: {"sets": 5, "reps": 5, "pcts": [0.75, 0.75, 0.75, 0.75, 0.75]},
-    2: {"sets": 5, "reps": 5, "pcts": [0.77, 0.77, 0.77, 0.77, 0.77]},
-    3: {"sets": 5, "reps": 4, "pcts": [0.80, 0.80, 0.80, 0.80, 0.80]},
-    4: {"sets": 5, "reps": 3, "pcts": [0.85, 0.85, 0.85, 0.85, 0.85]},
-    5: {"sets": 5, "reps": 2, "pcts": [0.90, 0.90, 0.90, 0.90, 0.90]},
-    6: {"sets": 5, "reps": 1, "pcts": [0.95, 0.95, 0.95, 0.92, 0.90]},
+    1: {"sets": 5, "reps": 5, "pcts": [0.75, 0.75, 0.75, 0.75, 0.75]},       # 5×5  Strength
+    2: {"sets": 4, "reps": 4, "pcts": [0.80, 0.80, 0.80, 0.80]},              # 4×4  Strength+
+    3: {"sets": 3, "reps": 3, "pcts": [0.85, 0.85, 0.85]},                    # 3×3  Heavy
+    4: {"sets": 2, "reps": 2, "pcts": [0.90, 0.90]},                          # 2×2  Peak
+    5: {"sets": 3, "reps": 5, "pcts": [0.60, 0.60, 0.60]},                    # 3×5  Deload
+    6: {"sets": 1, "reps": 1, "pcts": [1.00]},                                # 1×1  PR Test
 }
 
 
@@ -87,11 +87,10 @@ def _is_compound(exercise_id: str, catalog: dict) -> bool:
 
 # ── e1RM estimation constants ────────────────────────────────────────────────
 MIN_TARGET_REPS = 6          # lowest rep target the engine will set
-MAX_TARGET_REPS = 10         # highest rep target (user prefers 6-8, max 10)
-SLINGSHOT_E1RM_BOOST = 1.10  # muscle-memory boost:  deconditioning masks
-                              # ~10% of true capacity in the first 2 weeks
-INTRASET_FATIGUE_FACTOR = 0.87  # ~13% rep loss per repeated same-weight set
-                                 # e.g. 8 reps → 7 → 6 across three sets
+MAX_TARGET_REPS = 10         # highest rep target (user prefers 6–10)
+INTRASET_FATIGUE_FACTOR = 0.90  # ~10% rep loss per repeated same-weight set
+                                 # e.g. 10 → 9 → 8 across three sets
+MAX_WEIGHT_JUMP_FACTOR = 3      # cap single-week weight increase at 3× rounding
 
 
 def _estimate_e1rm(weight: float, reps: int) -> float:
@@ -119,7 +118,7 @@ def _apply_intraset_fatigue(plan: list) -> list:
       - Same weight as previous set → target = min(computed, prev_target × FACTOR)
       - The result is ALWAYS < prev_target (strictly decreasing), floor = 1.
         Fatigued sets are allowed to go below MIN_TARGET_REPS (e.g. S3 can land
-        on 4 reps when S2 was 6) because that is physiologically realistic.
+        on 5 reps when S2 was 7) because that is physiologically realistic.
       - Weight change (drop set or increase) resets the fatigue chain.
       - Non-numeric targets (Failure, 30s…) are passed through unchanged.
     """
@@ -156,6 +155,44 @@ def _apply_intraset_fatigue(plan: list) -> list:
 # DETERMINISTIC PROGRESSION (Phase 1)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# Performance classifications
+_CRUSHED   = "CRUSHED"    # actual ≥ target + 2, or RPE ≤ 6
+_EXCEEDED  = "EXCEEDED"   # actual ≥ target + 1, or RPE = 7
+_MET       = "MET"        # actual = target, RPE ≤ 8
+_STRUGGLED = "STRUGGLED"  # actual = target, RPE ≥ 9
+_MISSED    = "MISSED"     # actual = target − 1
+_FAILED    = "FAILED"     # actual ≤ target − 2
+
+
+def _classify_set(target_reps: int, actual_reps: int, rpe: int | None) -> str:
+    """
+    Classify a set's performance relative to its target.
+    RPE modulates the classification when available.
+    """
+    diff = actual_reps - target_reps
+
+    # RPE overrides when available
+    if rpe is not None:
+        if diff >= 0 and rpe <= 6:
+            return _CRUSHED
+        if diff >= 0 and rpe >= 9:
+            return _STRUGGLED
+
+    # Rep-based classification
+    if diff >= 2:
+        return _CRUSHED
+    if diff == 1:
+        return _EXCEEDED
+    if diff == 0:
+        # Distinguish met vs struggled via RPE if available
+        if rpe is not None and rpe >= 9:
+            return _STRUGGLED
+        return _MET
+    if diff == -1:
+        return _MISSED
+    return _FAILED  # diff <= -2
+
+
 def _compute_next_progression(
     current_week: int,
     exercise_id: str,
@@ -165,20 +202,19 @@ def _compute_next_progression(
     catalog: dict,
 ) -> tuple:
     """
-    Per-set e1RM-based progression.  Returns:
+    Performance-based, RPE-aware per-set progression.
+
+    Returns:
         plan  – [(weight, target_reps_str), …]  one tuple per set
         e1rms – [float, …]  per-set e1RM (used for linked-exercise reconciliation)
 
     Algorithm (per set):
-        1. Estimate e1RM from (actual_weight, actual_reps) via Epley.
-        2. During slingshot phase (weeks 1-2) boost e1RM by 10 %.
-        3. Bump weight by 1-2 equipment increments.
-        4. Predict reps at the new weight (inverse Epley).
-        5. If predicted reps ≥ 6 → accept; cap at 10.
-        6. Otherwise keep weight and target +1 rep (double progression).
+        1. Classify the set: CRUSHED / EXCEEDED / MET / STRUGGLED / MISSED / FAILED
+        2. Based on classification, decide weight action (bump / hold / drop)
+        3. Predict reps at the new weight via inverse Epley using per-set e1RM
+        4. Apply safeguards (min/max reps, max weight jump)
     """
     rounding = get_equipment_rounding(equipment)
-    is_slingshot = current_week <= 2
     compound = _is_compound(exercise_id, catalog)
 
     plan = []
@@ -192,7 +228,7 @@ def _compute_next_progression(
 
         # ── Non-numeric targets (Failure, 30s, etc.) → carry forward ──
         try:
-            int(tr_str)
+            tr = int(tr_str)
         except (ValueError, TypeError):
             plan.append((tw, tr_str))
             e1rms.append(0.0)
@@ -213,36 +249,68 @@ def _compute_next_progression(
             e1rms.append(0.0)
             continue
 
-        # ── Estimate e1RM (with slingshot boost) ──
+        # ── Estimate per-set e1RM ──
         e1rm = _estimate_e1rm(aw, ar)
-        if is_slingshot:
-            e1rm *= SLINGSHOT_E1RM_BOOST
         e1rms.append(e1rm)
 
-        # ── RPE ≥ 9 on isolation → keep weight, add a rep ──
-        if not compound and rpe is not None and rpe >= 9:
-            plan.append((aw, str(min(ar + 1, MAX_TARGET_REPS))))
-            continue
+        # ── Classify this set's performance ──
+        classification = _classify_set(tr, ar, rpe)
 
-        # ── Try bumping weight (slingshot = 2× rounding, wall = 1×) ──
-        bump = rounding * (2 if is_slingshot else 1)
-        candidate = snap_weight(aw + bump, equipment)
-        pred = _predict_reps_at(e1rm, candidate)
+        # ── Compute max allowed weight jump ──
+        max_jump = rounding * MAX_WEIGHT_JUMP_FACTOR
 
-        if pred >= MIN_TARGET_REPS:
-            plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
-            continue
+        # ── Apply classification-based progression ──
+        if classification == _CRUSHED:
+            # Aggressive bump: 2× rounding
+            bump = min(rounding * 2, max_jump)
+            candidate = snap_weight(aw + bump, equipment)
+            pred = _predict_reps_at(e1rm, candidate)
+            if pred >= MIN_TARGET_REPS:
+                plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
+            else:
+                # Fallback: 1× rounding
+                candidate = snap_weight(aw + rounding, equipment)
+                pred = _predict_reps_at(e1rm, candidate)
+                plan.append((candidate, str(min(max(pred, MIN_TARGET_REPS), MAX_TARGET_REPS))))
 
-        # Slingshot double-step too aggressive; try single step
-        if is_slingshot and bump > rounding:
+        elif classification == _EXCEEDED:
+            # Standard bump: 1× rounding
             candidate = snap_weight(aw + rounding, equipment)
             pred = _predict_reps_at(e1rm, candidate)
             if pred >= MIN_TARGET_REPS:
                 plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
-                continue
+            else:
+                # Can't go up — double progression (add 1 rep at same weight)
+                plan.append((aw, str(min(ar + 1, MAX_TARGET_REPS))))
 
-        # ── Can't raise weight → double progression (add rep) ──
-        plan.append((aw, str(min(ar + 1, MAX_TARGET_REPS))))
+        elif classification == _MET:
+            # Moderate bump: 1× rounding, but only if predicted reps ≥ MIN
+            candidate = snap_weight(aw + rounding, equipment)
+            pred = _predict_reps_at(e1rm, candidate)
+            if pred >= MIN_TARGET_REPS:
+                plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
+            else:
+                # Double progression: same weight, +1 rep
+                plan.append((aw, str(min(tr + 1, MAX_TARGET_REPS))))
+
+        elif classification == _STRUGGLED:
+            # Hold weight, target = actual + 1 (double progression)
+            # Don't increase weight if it was a grind
+            plan.append((aw, str(min(ar + 1, MAX_TARGET_REPS))))
+
+        elif classification == _MISSED:
+            # Keep weight, retry same target
+            plan.append((aw, str(tr)))
+
+        elif classification == _FAILED:
+            # Drop weight by 1× rounding, predict reps at lower weight
+            candidate = snap_weight(max(aw - rounding, rounding), equipment)
+            pred = _predict_reps_at(e1rm, candidate)
+            plan.append((candidate, str(min(max(pred, MIN_TARGET_REPS), MAX_TARGET_REPS))))
+
+        else:
+            # Fallback: carry forward
+            plan.append((tw, tr_str))
 
     # ── Apply intra-set fatigue deduction for same-weight consecutive sets ──
     plan = _apply_intraset_fatigue(plan)
