@@ -7,6 +7,7 @@ import PlanViewer from './components/PlanViewer';
 import ProgressionPage from './components/ProgressionPage';
 import Toast from './components/Toast';
 import ChatBubble from './components/ChatBubble';
+import Settings from './components/Settings';
 import { useWorkout } from './hooks/useWorkout';
 import { useToast } from './hooks/useToast';
 import { hasCompletedDays } from './api/client';
@@ -19,11 +20,11 @@ export default function App() {
 
   // Check if strength tab should be unlocked
   useEffect(() => {
-    hasCompletedDays().then(setStrengthUnlocked).catch(() => {});
+    hasCompletedDays().then(setStrengthUnlocked).catch(() => { });
   }, []);
 
   const checkStrengthUnlock = () => {
-    hasCompletedDays().then(setStrengthUnlocked).catch(() => {});
+    hasCompletedDays().then(setStrengthUnlocked).catch(() => { });
   };
 
   const handleSelectDay = (dayId) => {
@@ -59,6 +60,7 @@ export default function App() {
         {activeView === 'metrics' && <Dashboard />}
         {activeView === 'progression' && <ProgressionPage />}
         {activeView === 'plan' && <PlanViewer />}
+        {activeView === 'settings' && <Settings showToast={showToast} />}
         {activeView === 'workout' && (
           <WorkoutFeed
             exercises={exercises}

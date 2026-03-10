@@ -135,13 +135,8 @@ def _apply_intraset_fatigue(plan: list) -> list:
             continue
 
         if w == prev_w and prev_r is not None:
-            # Same weight — cap reps using fatigue factor, enforce strict decrease
-            fatigued = max(1, round(prev_r * INTRASET_FATIGUE_FACTOR))
-            if fatigued >= prev_r:       # rounding kept it equal — force -1
-                fatigued = prev_r - 1
-            # Take the minimum of the already-computed value and the fatigue cap
-            # Allow going below MIN_TARGET_REPS (fatigue reality), floor = 1
-            r = min(r, max(fatigued, 1))
+            # Same weight — user constraint: reps MUST be the same
+            r = prev_r
             result[i] = (w, str(r))
         # else: different weight — reset chain
 
@@ -213,9 +208,12 @@ def _compute_next_progression(
         2. Based on classification, decide weight action (bump / hold / drop)
         3. Predict reps at the new weight via inverse Epley using per-set e1RM
         4. Apply safeguards (min/max reps, max weight jump)
+        5. Important: Ensure strictly descending weights across sets (Y <= X).
     """
     rounding = get_equipment_rounding(equipment)
     compound = _is_compound(exercise_id, catalog)
+    ex_def = catalog.get(exercise_id, {})
+    custom_increments = ex_def.get("custom_increments")
 
     plan = []
     e1rms = []
@@ -263,19 +261,19 @@ def _compute_next_progression(
         if classification == _CRUSHED:
             # Aggressive bump: 2× rounding
             bump = min(rounding * 2, max_jump)
-            candidate = snap_weight(aw + bump, equipment)
+            candidate = snap_weight(aw + bump, equipment, custom_increments)
             pred = _predict_reps_at(e1rm, candidate)
             if pred >= MIN_TARGET_REPS:
                 plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
             else:
                 # Fallback: 1× rounding
-                candidate = snap_weight(aw + rounding, equipment)
+                candidate = snap_weight(aw + rounding, equipment, custom_increments)
                 pred = _predict_reps_at(e1rm, candidate)
                 plan.append((candidate, str(min(max(pred, MIN_TARGET_REPS), MAX_TARGET_REPS))))
 
         elif classification == _EXCEEDED:
             # Standard bump: 1× rounding
-            candidate = snap_weight(aw + rounding, equipment)
+            candidate = snap_weight(aw + rounding, equipment, custom_increments)
             pred = _predict_reps_at(e1rm, candidate)
             if pred >= MIN_TARGET_REPS:
                 plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
@@ -285,7 +283,7 @@ def _compute_next_progression(
 
         elif classification == _MET:
             # Moderate bump: 1× rounding, but only if predicted reps ≥ MIN
-            candidate = snap_weight(aw + rounding, equipment)
+            candidate = snap_weight(aw + rounding, equipment, custom_increments)
             pred = _predict_reps_at(e1rm, candidate)
             if pred >= MIN_TARGET_REPS:
                 plan.append((candidate, str(min(pred, MAX_TARGET_REPS))))
@@ -304,13 +302,33 @@ def _compute_next_progression(
 
         elif classification == _FAILED:
             # Drop weight by 1× rounding, predict reps at lower weight
-            candidate = snap_weight(max(aw - rounding, rounding), equipment)
+            candidate = snap_weight(max(aw - rounding, rounding), equipment, custom_increments)
             pred = _predict_reps_at(e1rm, candidate)
             plan.append((candidate, str(min(max(pred, MIN_TARGET_REPS), MAX_TARGET_REPS))))
 
         else:
             # Fallback: carry forward
             plan.append((tw, tr_str))
+
+    # ── Enforce strictly non-increasing weights across consecutive sets ──
+    for i in range(1, len(plan)):
+        prev_w = plan[i-1][0]
+        curr_w, curr_r_str = plan[i]
+        try:
+            curr_r = int(curr_r_str)
+        except (ValueError, TypeError):
+            continue
+            
+        if curr_w > prev_w:
+            # Cap the weight at the previous set's weight to prevent increasing weight
+            capped_w = prev_w
+            # Recalculate reps at the capped weight
+            if e1rms[i] > 0:
+                pred = _predict_reps_at(e1rms[i], capped_w)
+                capped_r_str = str(min(max(pred, MIN_TARGET_REPS), MAX_TARGET_REPS))
+            else:
+                capped_r_str = curr_r_str
+            plan[i] = (capped_w, capped_r_str)
 
     # ── Apply intra-set fatigue deduction for same-weight consecutive sets ──
     plan = _apply_intraset_fatigue(plan)
@@ -490,8 +508,9 @@ def generate_next_week_deterministic(conn) -> int:
                 plan_data.append(plan_data[-1] if plan_data else (0, "8"))
             plan_data = plan_data[:num_sets]
 
+            custom_inc = ex_def.get("custom_increments")
             # Snap weights to equipment increments
-            plan_data = [(snap_weight(w, equipment), r) for w, r in plan_data]
+            plan_data = [(snap_weight(w, equipment, custom_inc), r) for w, r in plan_data]
 
             weights = [w for w, _ in plan_data]
             # Representative target_reps for workout_plan (first set's value)
@@ -628,7 +647,8 @@ def apply_ai_suggestions(next_week: int, suggestions: list):
             continue
 
         equipment = catalog.get(ex_id, {}).get("equipment", "unknown")
-        new_w = snap_weight(new_w, equipment)
+        custom_inc = catalog.get(ex_id, {}).get("custom_increments")
+        new_w = snap_weight(new_w, equipment, custom_inc)
 
         conn.execute("""
             UPDATE workout_logs SET target_weight = ?

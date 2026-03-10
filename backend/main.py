@@ -115,6 +115,67 @@ class WatchPayload(BaseModel):
     sleep_deep: Optional[float] = 0.0
 
 
+class EquipmentConfigPayload(BaseModel):
+    """Update custom increments for a machine exercise."""
+    custom_increments: List[float]
+
+
+# ── Configuration Endpoints ──────────────────────────────────────────────────
+
+@app.get("/config/equipment")
+def get_equipment_config():
+    """Returns all machine exercises and their custom increments."""
+    catalog_path = Path(__file__).resolve().parent / "exercises.json"
+    if not catalog_path.exists():
+        return {"exercises": []}
+        
+    try:
+        with open(catalog_path, "r") as f:
+            catalog = json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    results = []
+    for ex_id, data in catalog.items():
+        if data.get("equipment") == "machine":
+            results.append({
+                "exercise_id": ex_id,
+                "name": data.get("name", ex_id),
+                "equipment": data.get("equipment"),
+                "custom_increments": data.get("custom_increments", [])
+            })
+            
+    # Sort alphabetically by name
+    results.sort(key=lambda x: x["name"])
+    return {"exercises": results}
+
+
+@app.put("/config/equipment/{exercise_id}")
+def update_equipment_config(exercise_id: str, payload: EquipmentConfigPayload):
+    catalog_path = Path(__file__).resolve().parent / "exercises.json"
+    if not catalog_path.exists():
+        raise HTTPException(status_code=404, detail="Exercises catalog not found")
+        
+    try:
+        with open(catalog_path, "r") as f:
+            catalog = json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    if exercise_id not in catalog:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+        
+    catalog[exercise_id]["custom_increments"] = payload.custom_increments
+    
+    try:
+        with open(catalog_path, "w") as f:
+            json.dump(catalog, f, indent=2)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return {"status": "success", "exercise_id": exercise_id, "custom_increments": payload.custom_increments}
+
+
 # ── Apple Health Webhook → now writes to DB ──────────────────────────────────
 
 @app.post("/webhook/apple-health")

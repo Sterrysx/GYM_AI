@@ -247,3 +247,21 @@ export async function fetchAbsHistory() {
   const { data } = await api.get('/abs/history');
   return data;
 }
+
+/**
+ * Fetch equipiment configurations.
+ */
+export async function fetchEquipmentConfig() {
+  const { data } = await api.get('/config/equipment');
+  return data.exercises;
+}
+
+/**
+ * Update equipment configurations for a specific exercise.
+ */
+export async function updateEquipmentConfig(exerciseId, customIncrements) {
+  const { data } = await api.put(`/config/equipment/${exerciseId}`, {
+    custom_increments: customIncrements
+  });
+  return data;
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Loader2, BarChart2, Dumbbell, Scale, ClipboardList, TrendingUp, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import DaySelector from './DaySelector';
 import { generateNextWeek } from '../api/client';
 
@@ -43,28 +43,37 @@ export default function Layout({ week, weeks = [], activeDay, onSelectDay, onSel
             )}
           </h1>
 
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-400 text-sky-400 text-xs font-bold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:bg-sky-400 active:text-black"
-          >
-            {generating ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Sparkles size={14} />
-            )}
-            {generating ? 'Generating…' : 'Next Week'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onViewChange('settings')}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${activeView === 'settings' ? 'text-sky-400 bg-zinc-800' : 'text-zinc-500 active:bg-zinc-800'}`}
+              title="Equipment Settings"
+            >
+              <Settings size={20} />
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-400 text-sky-400 text-xs font-bold uppercase tracking-wide transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:bg-sky-400 active:text-black"
+            >
+              {generating ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Sparkles size={14} />
+              )}
+              {generating ? 'Generating…' : 'Next Week'}
+            </button>
+          </div>
         </div>
 
         {/* Tab navigation */}
         <div className="flex gap-1 mb-2.5">
           {[
-            { key: 'stats',       icon: BarChart2,      label: 'Overview' },
-            { key: 'metrics',     icon: Scale,           label: 'Body' },
-            { key: 'progression', icon: TrendingUp,      label: 'Strength' },
-            { key: 'plan',        icon: ClipboardList,   label: 'Plan' },
-            { key: 'workout',     icon: Dumbbell,        label: 'Workout' },
+            { key: 'stats', icon: BarChart2, label: 'Overview' },
+            { key: 'metrics', icon: Scale, label: 'Body' },
+            { key: 'progression', icon: TrendingUp, label: 'Strength' },
+            { key: 'plan', icon: ClipboardList, label: 'Plan' },
+            { key: 'workout', icon: Dumbbell, label: 'Workout' },
           ].map(({ key, icon: Icon, label }) => {
             const locked = key === 'progression' && !strengthUnlocked;
             return (
@@ -72,13 +81,12 @@ export default function Layout({ week, weeks = [], activeDay, onSelectDay, onSel
                 key={key}
                 onClick={() => !locked && onViewChange(key)}
                 disabled={locked}
-                className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  locked
+                className={`flex items-center gap-1.5 flex-1 justify-center py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${locked
                     ? 'text-zinc-700 cursor-not-allowed'
                     : activeView === key
                       ? 'bg-zinc-800 text-zinc-200'
                       : 'text-zinc-500 active:bg-zinc-900'
-                }`}
+                  }`}
                 title={locked ? 'Complete a workout day to unlock' : undefined}
               >
                 <Icon size={14} />

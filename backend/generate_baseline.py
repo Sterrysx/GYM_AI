@@ -51,10 +51,15 @@ EQUIPMENT_INCREMENTS = {
 }
 
 
-def snap_weight(weight: float, equipment: str) -> float:
+def snap_weight(weight: float, equipment: str, custom_increments: list = None) -> float:
     """Round a weight to the nearest valid value for the equipment type."""
     if weight <= 0:
         return 0.0
+        
+    if custom_increments:
+        closest = min(custom_increments, key=lambda v: abs(v - weight))
+        return float(closest)
+        
     increments = EQUIPMENT_INCREMENTS.get(equipment, [])
     if not increments:
         return weight
@@ -277,11 +282,12 @@ def build_week1_data() -> dict:
             ex_def = catalog.get(ex_id, {})
             equipment = ex_def.get("equipment", "unknown")
             rounding = get_equipment_rounding(equipment)
+            custom_increments = ex_def.get("custom_increments")
 
             # Get baseline weights or default to zeros
             raw_weights = WEEK1_BASELINES.get((day_id, ex_id), [0] * entry["sets"])
             # Snap each weight to the nearest valid equipment value
-            snapped_weights = [snap_weight(w, equipment) for w in raw_weights]
+            snapped_weights = [snap_weight(w, equipment, custom_increments) for w in raw_weights]
 
             enriched = {
                 "exercise_id": ex_id,
