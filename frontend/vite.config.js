@@ -34,6 +34,7 @@ export default defineConfig({
       '/chat': 'http://localhost:8000',
       '/plan': 'http://localhost:8000',
       '/abs': 'http://localhost:8000',
+      '/config': 'http://localhost:8000',
     }
   }
 })

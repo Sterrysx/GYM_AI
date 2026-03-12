@@ -1,0 +1,252 @@
+{
+  "date": "2026-03-08",
+  "week_id": 2,
+  "day": 1,
+  "exercises": [
+    {
+      "exercise": "Barbell Bench Press",
+      "exercise_id": "barbell_bench_press",
+      "strategy": "periodized_bench",
+      "planned_reps": "5",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 70.0,
+          "actual_weight": 70.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 70.0,
+          "actual_weight": 70.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 70.0,
+          "actual_weight": 70.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 4,
+          "target_weight": 70.0,
+          "actual_weight": 70.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 5,
+          "target_weight": 70.0,
+          "actual_weight": 70.0,
+          "actual_reps": 5,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Low Cable Flyes",
+      "exercise_id": "low_cable_flyes",
+      "strategy": "linear",
+      "planned_reps": "8",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 7.5,
+          "actual_weight": 7.5,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 7.5,
+          "actual_weight": 7.5,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 4,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Frontal Plate Raises",
+      "exercise_id": "frontal_plate_raises",
+      "strategy": "linear",
+      "planned_reps": "5",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 10.0,
+          "actual_weight": 10.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 9,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 8,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Overhead Tricep Extension (Cable)",
+      "exercise_id": "overhead_cable_tricep_ext",
+      "strategy": "linear",
+      "planned_reps": "9",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 75.0,
+          "actual_weight": 75.0,
+          "actual_reps": 8,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 75.0,
+          "actual_weight": 75.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 65.0,
+          "actual_weight": 65.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 4,
+          "target_weight": 65.0,
+          "actual_weight": 65.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Lateral Dumbbell Raises",
+      "exercise_id": "lateral_dumbbell_raises",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 9.0,
+          "actual_weight": 9.0,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 8.0,
+          "actual_weight": 8.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 8.0,
+          "actual_weight": 8.0,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 4,
+          "target_weight": 7.0,
+          "actual_weight": 7.0,
+          "actual_reps": 5,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Tricep Pushdowns",
+      "exercise_id": "tricep_pushdowns",
+      "strategy": "linear",
+      "planned_reps": "6",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 95.0,
+          "actual_weight": 95.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 90.0,
+          "actual_weight": 90.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 85.0,
+          "actual_weight": 85.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 4,
+          "target_weight": 85.0,
+          "actual_weight": 0.0,
+          "actual_reps": 0,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Lateral Cable Raises",
+      "exercise_id": "lateral_cable_raises",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 3.75,
+          "actual_weight": 3.75,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 3.75,
+          "actual_weight": 3.75,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 2.5,
+          "actual_weight": 2.5,
+          "actual_reps": 8,
+          "rpe": null
+        },
+        {
+          "set": 4,
+          "target_weight": 2.5,
+          "actual_weight": 0.0,
+          "actual_reps": 0,
+          "rpe": null
+        }
+      ]
+    }
+  ]
+}

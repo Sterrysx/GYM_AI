@@ -83,7 +83,7 @@ export default function Settings({ showToast }) {
             </p>
 
             <div className="space-y-4">
-                {exercises.map((ex) => (
+                {exercises?.map((ex) => (
                     <div key={ex.exercise_id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-semibold text-zinc-200">{ex.name}</h3>

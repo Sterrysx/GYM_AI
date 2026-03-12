@@ -1,0 +1,210 @@
+{
+  "date": "2026-03-11",
+  "week_id": 3,
+  "day": 3,
+  "exercises": [
+    {
+      "exercise": "Hip Abduction Machine",
+      "exercise_id": "hip_abduction_machine",
+      "strategy": "linear",
+      "planned_reps": "8",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 110.0,
+          "actual_weight": 110.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 105.0,
+          "actual_weight": 105.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 95.0,
+          "actual_weight": 95.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Glute Machine",
+      "exercise_id": "glute_machine",
+      "strategy": "linear",
+      "planned_reps": "9",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 45.0,
+          "actual_weight": 45.0,
+          "actual_reps": 5,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Lying Leg Curls",
+      "exercise_id": "lying_leg_curls",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 35.0,
+          "actual_weight": 35.0,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 28.0,
+          "actual_weight": 28.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 21.0,
+          "actual_weight": 21.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Leg Extensions",
+      "exercise_id": "leg_extensions",
+      "strategy": "linear",
+      "planned_reps": "8",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 60.0,
+          "actual_weight": 60.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 50.0,
+          "actual_weight": 50.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 40.0,
+          "actual_weight": 40.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Machine Calf Extensions",
+      "exercise_id": "machine_calf_extensions",
+      "strategy": "linear",
+      "planned_reps": "8",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 60.0,
+          "actual_weight": 60.0,
+          "actual_reps": 5,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 45.0,
+          "actual_weight": 45.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 40.0,
+          "actual_weight": 40.0,
+          "actual_reps": 7,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Weighted Back Extensions",
+      "exercise_id": "weighted_back_extensions",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 10.0,
+          "actual_weight": 10.0,
+          "actual_reps": 6,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 7,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 5.0,
+          "actual_weight": 5.0,
+          "actual_reps": 6,
+          "rpe": null
+        }
+      ]
+    },
+    {
+      "exercise": "Abdominal Crunch Machine",
+      "exercise_id": "abdominal_crunch_machine",
+      "strategy": "linear",
+      "planned_reps": "7",
+      "sets": [
+        {
+          "set": 1,
+          "target_weight": 55.0,
+          "actual_weight": 55.0,
+          "actual_reps": 4,
+          "rpe": null
+        },
+        {
+          "set": 2,
+          "target_weight": 50.0,
+          "actual_weight": 0.0,
+          "actual_reps": 0,
+          "rpe": null
+        },
+        {
+          "set": 3,
+          "target_weight": 40.0,
+          "actual_weight": 0.0,
+          "actual_reps": 0,
+          "rpe": null
+        }
+      ]
+    }
+  ]
+}
