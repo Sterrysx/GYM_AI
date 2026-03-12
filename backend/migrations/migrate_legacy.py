@@ -4,8 +4,8 @@ import csv
 import glob
 from datetime import datetime
 from sqlalchemy.orm import Session
-from backend.db.init import SessionLocal, init_db
-from backend.db.schema import (
+from db.init import SessionLocal, init_db
+from db.schema import (
     Session as DbSession, SessionExercise, Set,
     DailyMetric, BodyComposition, Exercise
 )
@@ -32,15 +32,18 @@ def migrate_workouts(db: Session):
         except ValueError:
             continue
             
-        # Check if session exists
-        existing = db.query(DbSession).filter(DbSession.date == date_obj).first()
+        day_label = f"Day{data.get('day', 0)}_{data.get('day_name', 'Workout')}"
+        week_num = data.get('week_id', 1)
+        
+        # Check if session exists for that exact week and day label (to allow same day logging)
+        existing = db.query(DbSession).filter(DbSession.week_number == week_num, DbSession.day_label == day_label).first()
         if existing:
             continue
             
         session = DbSession(
             date=date_obj,
-            day_label=f"Day{data.get('day', 0)}_{data.get('day_name', 'Workout')}",
-            week_number=data.get('week_id', 1)
+            day_label=day_label,
+            week_number=week_num
         )
         db.add(session)
         db.flush() # get session.id

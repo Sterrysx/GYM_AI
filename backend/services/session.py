@@ -1,6 +1,6 @@
 from datetime import date
 from sqlalchemy.orm import Session as DbSession
-from backend.db.schema import Session, SessionExercise, Set
+from db.schema import Session, SessionExercise, Set
 
 def create_session(db: DbSession, date_val: date, day_label: str, week_number: int):
     s = Session(date=date_val, day_label=day_label, week_number=week_number)

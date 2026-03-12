@@ -45,7 +45,7 @@ def get_bench_cycle_targets(bench_pr_kg: float, current_week: int) -> dict:
     }
 
 def advance_bench_cycle(current_week: int, completed_weight_kg: float, bench_pr_kg: float, db_session) -> dict:
-    from backend.db.schema import BenchCycle
+    from db.schema import BenchCycle
 
     if current_week == 6:
         new_pr = max(completed_weight_kg, bench_pr_kg)
@@ -86,7 +86,7 @@ def get_next_weight(current_weight, weights_available, direction):
         return weights_available[max(idx - 1, 0)]
 
 def compute_next_week(exercise_id: int, sessions_history: list[dict], daily_metrics: list[dict], db_session) -> list[dict]:
-    from backend.db.schema import Exercise
+    from db.schema import Exercise
     exercise = db_session.query(Exercise).filter(Exercise.id == exercise_id).first()
     if not exercise:
         return []

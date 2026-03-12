@@ -1,6 +1,6 @@
 from datetime import date
 from sqlalchemy.orm import Session as DbSession
-from backend.db.schema import DailyMetric, BodyComposition
+from db.schema import DailyMetric, BodyComposition
 
 def log_apple_health(db: DbSession, date_val: date, active_cal: int, resting_cal: int, steps: int, distance_km: float, sleep_hours: float):
     m = db.query(DailyMetric).filter(DailyMetric.date == date_val).first()

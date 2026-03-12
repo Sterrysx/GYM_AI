@@ -28,7 +28,7 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    date = Column(Date, nullable=False, unique=True)
+    date = Column(Date, nullable=False)
     day_label = Column(String, nullable=False)
     week_number = Column(Integer, nullable=False)
     start_time = Column(DateTime, nullable=True)

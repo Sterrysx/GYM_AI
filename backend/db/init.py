@@ -2,7 +2,7 @@ import json
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .schema import Base, Exercise, BenchCycle
+from db.schema import Base, Exercise, BenchCycle
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'gym.db')
 engine = create_engine(f"sqlite:///{DB_PATH}")
